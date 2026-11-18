@@ -71,6 +71,12 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 - **Push sur GitHub** : créer le dépôt, ajouter le remote, pousser `main` et le tag `v1.0`. Vérifier avant
   qu'il ne contient ni morceau de la HVSC ni ROM du C64 (c'est le cas via `.gitignore`), et choisir une
   licence pour le code.
+- **NTSC** (le C64 Ultimate peut passer en NTSC, donc c'est testable) : le client règle sa cadence d'après
+  le système (50 ou 60 images par seconde), mais les morceaux sont presque tous écrits pour le PAL. En
+  NTSC ils joueraient environ 20 % plus vite (comme sur un vrai C64 américain) et la durée serait fausse,
+  car elle est comptée avec la cadence de la machine au lieu de celle du morceau. Correctif prévu : le
+  serveur envoie l'horloge du morceau (PAL/NTSC, déjà dans l'index) et le client compte les images avec
+  cette cadence. À tester ensuite sur l'Ultimate réglé en NTSC (puis le remettre en PAL).
 - Tester les touches ESPACE / Q / S / C / V sur le matériel (seules les commandes de lecture ont été
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.
