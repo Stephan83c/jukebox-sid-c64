@@ -1,0 +1,17 @@
+# généré / local
+__pycache__/
+*.pyc
+jukebox.db
+srv.log
+recus/
+c64/build/
+c64/*.o
+c64/*.lbl
+
+# morceaux de la HVSC (protégés par le droit d'auteur) : à regénérer avec make_demo.py
+c64/demo.bin
+c64/demo.h
+c64/demo.s
+
+# ROM des caractères du C64 : à regénérer avec dump_chargen.py (on ne redistribue pas la ROM)
+c64/chargen_set1.bin
