@@ -87,6 +87,12 @@ glyphs: .byte 0,0,0,$00,$00,0,0,0
 
 ; couleurs du logo et du scroller (défilent)
 rainbow: .byte 2, 8, 7, 5, 3, 14, 4, 10
+; Dégradé arc-en-ciel des vu-mètres, une couleur par case (32 cases), sans noir.
+vucolors:
+        .byte   2, 2, 2, 2, 8, 8, 8, 8
+        .byte   7, 7, 7, 13, 13, 13, 13, 5
+        .byte   5, 5, 3, 3, 3, 3, 14, 14
+        .byte   14, 6, 6, 6, 6, 4, 4, 4
 
         .code
 
@@ -510,7 +516,16 @@ vis_start:
         sta     $DD00
         lda     #$DE            ; écran $F400, caractères $F800
         sta     $D018
-        rts
+        lda     _vis_on         ; vu-mètres : dégradé arc-en-ciel (mémoire couleur)
+        beq     @nov
+        ldx     #31
+@vc:    lda     vucolors,x
+        sta     $D800 + 14 * 40 + 3,x
+        sta     $D800 + 15 * 40 + 3,x
+        sta     $D800 + 16 * 40 + 3,x
+        dex
+        bpl     @vc
+@nov:   rts
 
 ; ---------------------------------------------------------------- lecture
 

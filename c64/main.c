@@ -4,10 +4,10 @@
 #include "uci.h"
 
 #ifndef SERVEUR_IP
-#define SERVEUR_IP "192.168.1.55"
+#define SERVEUR_IP "boombass.net"
 #endif
 #ifndef SERVEUR_PORT
-#define SERVEUR_PORT 6464
+#define SERVEUR_PORT 6474
 #endif
 
 #define BARRE 0x7C   /* '|' en ASCII : un littéral serait converti par cc65 */

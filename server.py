@@ -112,7 +112,7 @@ async def main():
     ap.add_argument("--db", type=Path, default=Path("jukebox.db"))
     ap.add_argument("--root", type=Path, required=True, help="dossier C64Music")
     ap.add_argument("--host", default="0.0.0.0")
-    ap.add_argument("--port", type=int, default=6464)
+    ap.add_argument("--port", type=int, default=6474)
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     jb = Jukebox(a.db, a.root)

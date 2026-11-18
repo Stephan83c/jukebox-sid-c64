@@ -8,7 +8,7 @@ L'écran de lecture : logo géant, titre / artiste / année, temps écoulé, tro
 SID), scroller de démo, touches.
 
 ```
- ┌────────────┐   texte, TCP :6464    ┌──────────────────────┐
+ ┌────────────┐   texte, TCP :6474    ┌──────────────────────┐
  │  serveur   │ ◄───────────────────► │  C64 Ultimate        │
  │ server.py  │   RANDOM [motif]      │  c64/ (cc65 + 6502)  │
  │ jukebox.db │ ──► OK|…|code brut    │  UCI : sockets TCP   │
@@ -28,12 +28,12 @@ avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests 
 # 1. la HVSC (à télécharger sur https://hvsc.c64.org/) puis l'index des morceaux jouables
 python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA8FF
 
-# 2. le serveur (port 6464)
+# 2. le serveur (port 6474)
 python3 server.py --root /chemin/vers/C64Music
 
 # 3. le client C64 : adapter SERVEUR_IP et ULTIMATE dans c64/Makefile (ou en ligne de commande)
 cd c64
-make SERVEUR_IP=192.168.1.55 ULTIMATE=192.168.1.27 deploy
+make SERVEUR_IP=boombass.net ULTIMATE=192.168.1.27 deploy
 ```
 
 `--max-addr` doit rester égal à `HISTART - 1` du Makefile (et à `MEM_HAUT` de `main.c`) : c'est la limite

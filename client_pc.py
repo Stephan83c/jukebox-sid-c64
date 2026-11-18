@@ -68,7 +68,7 @@ def play_on_ultimate(ip: str, tune: dict):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", type=int, default=6464)
+    ap.add_argument("--port", type=int, default=6474)
     ap.add_argument("--pattern", default="")
     ap.add_argument("--ultimate", metavar="IP")
     ap.add_argument("--local", action="store_true")

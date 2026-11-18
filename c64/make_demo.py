@@ -2,7 +2,7 @@
 """Génère demo.bin / demo.h / demo.s à partir d'un morceau du serveur (pour tester l'affichage dans VICE)."""
 import socket, sys
 tid = sys.argv[1] if len(sys.argv) > 1 else "27162"
-s = socket.create_connection(("127.0.0.1", 6464), timeout=10)
+s = socket.create_connection(("127.0.0.1", 6474), timeout=10)
 s.sendall(f"GET {tid}\n".encode())
 f = s.makefile("rb")
 h = f.readline().decode("latin-1").rstrip("\n").split("|")
