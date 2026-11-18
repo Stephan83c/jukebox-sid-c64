@@ -44,8 +44,8 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
 
 11. **Serveur public** (v1.1) : le serveur tourne sur un VPS (`boombass.net:6474`), client réglé sur ce nom.
    Pas de root sur la machine : processus détaché en attendant que l'administrateur active `linger` pour un
-   service `systemd --user`, comme le serveur de belote qui y tourne déjà. Le dépôt GitHub (privé) est
-   cloné sur le serveur avec une clé de déploiement en lecture seule.
+   service `systemd --user`, comme le serveur de belote qui y tourne déjà. Le dépôt GitHub (privé à l'époque, public depuis le
+   2026-11-18) est cloné sur le serveur avec une clé de déploiement en lecture seule.
 12. **Vu-mètres en arc-en-ciel** : dégradé fixe sur les 32 cases (rouge à violet, jamais de noir).
 13. **Texte du scroller fourni par le serveur** (`scroll.txt`, relu à chaque morceau, alphabet fixe de
    32 glyphes, 150 caractères). Le client était plein (le premier essai dépassait de 680 octets) : texte de
@@ -89,7 +89,7 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 - **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`
   sont fixés dans le `Makefile` à la compilation (valeurs actuelles : `boombass.net`, `6474`). Piste : champ
   modifiable au clavier, comme dans *Belote LAN C64* (touche F3).
-- Code sous licence MIT (ajoutée après la v1.1, ne couvre pas les morceaux de la HVSC) ; dépôt GitHub privé : `Stephan83c/jukebox-sid-c64`.
+- Code sous licence MIT (ajoutée après la v1.1, ne couvre pas les morceaux de la HVSC) ; dépôt GitHub public : `Stephan83c/jukebox-sid-c64` (historique nettoyé avant la publication).
 - Le texte du scroller ne change qu'au morceau suivant ; un rafraîchissement en cours de lecture
   demanderait un accès réseau pendant le morceau (risque pour la synchronisation).
 - Plus de glyphes au scroller : alphabet de 45 glyphes (A-Z, `* . , ! ? - / ' :`, 0-9). Il reste 18 codes libres (`$C2-$DF`, 15 glyphes possibles), 16 octets par glyphe, 236 octets de marge.
