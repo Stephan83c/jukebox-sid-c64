@@ -52,7 +52,7 @@ haute des morceaux, le client occupe la mémoire au-dessus.
 ## Le protocole (texte, une commande par ligne)
 
 ```
-RANDOM [motif]  ->  OK|id|taille|secondes|sous-morceau|chargement|init|play|titre|auteur|année\n
+RANDOM [motif]  ->  OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année\n
                     + <taille> octets de code brut (sans en-tête PSID)
 GET <id>        ->  idem pour un morceau précis
 STATS           ->  STATS|compatibles|total

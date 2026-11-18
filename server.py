@@ -2,7 +2,7 @@
 """Serveur jukebox SID : tirage aléatoire, un morceau par demande, sans état partagé.
 
 Protocole texte (une commande par ligne, réponses terminées par \\n) :
-    RANDOM [motif]   -> OK|id|taille|secondes|sous-morceau|chargement|init|play|titre|auteur|année\\n
+    RANDOM [motif]   -> OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année\\n
                         + <taille> octets de code brut (sans en-tête PSID), à copier à l'adresse de chargement
                         (motif : sous-chaîne cherchée dans l'auteur ou le titre, sans tenir compte de la casse)
     GET <id>         -> idem pour un morceau précis
@@ -66,8 +66,9 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row):
         off += 2
     data = data[off:]
     secs = int(row["seconds"] or DEFAULT_SECONDS)
-    head = "OK|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s\n" % (
-        row["id"], len(data), secs, row["start_song"],
+    fps = 60 if row["clock"] == "NTSC" else 50     # cadence pour laquelle le morceau est écrit
+    head = "OK|%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s\n" % (
+        row["id"], len(data), secs, fps, row["start_song"],
         row["load_addr"], row["init_addr"], row["play_addr"],
         clean(row["title"]), clean(row["author"]), clean(row["released"]))
     w.write(head.encode("latin-1", "replace") + data)

@@ -40,10 +40,10 @@ def fetch(host: str, port: int, pattern: str):
         head = recv_line(s).decode("latin-1").split("|")
         if head[0] != "OK":
             raise SystemExit(f"Erreur serveur : {head[1:]}")
-        _, tid, size, secs, song, load, init, play, title, author, released = head
+        _, tid, size, secs, fps, song, load, init, play, title, author, released = head
         data = recv_exact(s, int(size))
         s.sendall(b"QUIT\n")
-    return dict(id=int(tid), seconds=int(secs), song=int(song), title=title,
+    return dict(id=int(tid), seconds=int(secs), fps=int(fps), song=int(song), title=title,
                 author=author, released=released, data=data,
                 load=int(load), init=int(init), play=int(play))
 

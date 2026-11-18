@@ -32,7 +32,14 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    passage : les changements de couleur en pleine ligne laissent un pixel gris sur le VIC-II.
 8. **Scroller de démo** : scroll matériel `$D016` limité à sa ligne par deux interruptions raster, lettres
    de 12 pixels (la police du C64 étirée), le nom de l'auteur dedans.
-9. **Mise en page** : texte à gauche, blocs répartis sur les 25 lignes, ligne des touches sur les 40
+9. **NTSC** : essayé sur l'Ultimate réglé en NTSC (réglage `System Mode`, par l'API REST, puis remis en PAL).
+   Le client a continué de jouer pendant le changement de mode et l'interruption raster tournait bien à
+   60 images/s. Défaut trouvé et corrigé : la durée était comptée avec la cadence de la machine ; le
+   serveur envoie maintenant la cadence du morceau (50 ou 60, d'après l'horloge de son en-tête) et le
+   client compte les images avec elle. Reste vrai, et normal : un morceau PAL joué sur une machine NTSC
+   va environ 20 % plus vite et un peu plus aigu, comme sur un vrai C64. Non vérifié : l'aspect de
+   l'écran en NTSC (je ne vois pas l'écran) et l'oreille.
+10. **Mise en page** : texte à gauche, blocs répartis sur les 25 lignes, ligne des touches sur les 40
    colonnes.
 
 ## Le catalogue selon la place prise par le client
@@ -71,12 +78,6 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 - **Push sur GitHub** : créer le dépôt, ajouter le remote, pousser `main` et le tag `v1.0`. Vérifier avant
   qu'il ne contient ni morceau de la HVSC ni ROM du C64 (c'est le cas via `.gitignore`), et choisir une
   licence pour le code.
-- **NTSC** (le C64 Ultimate peut passer en NTSC, donc c'est testable) : le client règle sa cadence d'après
-  le système (50 ou 60 images par seconde), mais les morceaux sont presque tous écrits pour le PAL. En
-  NTSC ils joueraient environ 20 % plus vite (comme sur un vrai C64 américain) et la durée serait fausse,
-  car elle est comptée avec la cadence de la machine au lieu de celle du morceau. Correctif prévu : le
-  serveur envoie l'horloge du morceau (PAL/NTSC, déjà dans l'index) et le client compte les images avec
-  cette cadence. À tester ensuite sur l'Ultimate réglé en NTSC (puis le remettre en PAL).
 - Tester les touches ESPACE / Q / S / C / V sur le matériel (seules les commandes de lecture ont été
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.

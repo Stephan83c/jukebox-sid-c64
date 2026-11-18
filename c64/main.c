@@ -40,7 +40,7 @@ static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre *
 static char cmdr[48];
 static char hdr[176];
 
-static unsigned t_id, t_size, t_secs, t_load;
+static unsigned t_id, t_size, t_secs, t_load, t_fps;
 static char *t_title, *t_author, *t_released;
 
 static unsigned jiffies(void)
@@ -109,6 +109,7 @@ static unsigned char analyser(void)
     t_id = nombre(champ(&p));
     t_size = nombre(champ(&p));
     t_secs = nombre(champ(&p));
+    t_fps = nombre(champ(&p));    /* cadence du morceau : 50 (PAL) ou 60 (NTSC) */
     song_nr = nombre(champ(&p));
     t_load = nombre(champ(&p));
     init_addr = nombre(champ(&p));
@@ -414,7 +415,7 @@ void main(void)
         champ_ligne(4, "TITLE: ", COLOR_YELLOW, t_title, 33);
         champ_ligne(5, "ARTIST: ", COLOR_WHITE, t_author, 32);
         champ_ligne(6, "RELEASED: ", COLOR_WHITE, t_released, 30);
-        fps = *(volatile unsigned char *)0x02A6 ? 50 : 60;   /* PAL / NTSC */
+        fps = t_fps == 60 ? 60 : 50;   /* cadence du morceau, pas celle de la machine */
         secs = t_secs > MAX_SECS ? MAX_SECS : t_secs;
         frames_max = secs * fps;
         debut(9);
