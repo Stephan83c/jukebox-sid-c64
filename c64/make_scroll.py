@@ -5,7 +5,7 @@ Les formes viennent de la vraie police du C64 (chargen_set1.bin, extraite de VIC
 (8 lignes -> 12). Le texte est ici : un octet par colonne de 8 pixels (0 = espace, n = n-ième lettre
 distincte, $FF = fin). Codes de caractères utilisés : 64 + 2 * (n - 1) (haut) et +1 (bas) pour n <= 32, 168 + 2 * (n - 33) au-delà.
 """
-TEXT = "          JUKEBOX SID  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "   # texte de secours (le vrai vient du serveur : scroll.txt)
+TEXT = "          SID JUKEBOX  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "   # texte de secours (le vrai vient du serveur : scroll.txt)
 rom = open("chargen_set1.bin", "rb").read()
 
 def screen_code(ch):

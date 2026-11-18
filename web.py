@@ -165,7 +165,7 @@ RAINBOW = ["#d9548f", "#d98a3d", "#f2e24b", "#8be36b", "#63d9c9", "#7b7cf2", "#4
 
 PAGE = """<!doctype html>
 <html lang="@@lang@@"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JUKEBOX SID - SCROLLER</title>
+<title>SID JUKEBOX - SCROLLER</title>
 <style>
 :root{color-scheme:dark;--bg:#000;--lb:#8b8bff;--yl:#f2f27a;--rd:#d9548f;--gr:#8be36b}
 *{box-sizing:border-box}
@@ -248,7 +248,7 @@ if(w>0)tick();
 
 ABOUT_FR = """<section class="about" aria-labelledby="ab">
 <h2 id="ab">C'EST QUOI, CE JUKEBOX ?</h2>
-<p><b>Jukebox SID</b> est une radio de musiques SID pour le <b>C64 Ultimate</b>. Ton C64 demande un morceau au
+<p><b>SID Jukebox</b> est une radio de musiques SID pour le <b>C64 Ultimate</b>. Ton C64 demande un morceau au
 hasard à ce serveur, le reçoit par le réseau, puis le <b>joue lui-même</b> : c'est son processeur 6510 qui exécute le
 code du morceau, comme à l'époque. Chaque C64 a son propre tirage, il n'y a pas de synchronisation entre les
 auditeurs. Le catalogue compte plus de 44 000 morceaux de la HVSC.</p>
@@ -277,7 +277,7 @@ Collection</a> ; ils restent la propriété de leurs auteurs et ne sont pas incl
 
 ABOUT_EN = """<section class="about" aria-labelledby="ab">
 <h2 id="ab">WHAT IS THIS JUKEBOX?</h2>
-<p><b>Jukebox SID</b> is a SID music radio for the <b>C64 Ultimate</b>. Your C64 asks this server for a random tune,
+<p><b>SID Jukebox</b> is a SID music radio for the <b>C64 Ultimate</b>. Your C64 asks this server for a random tune,
 receives it over the network, then <b>plays it itself</b>: its own 6510 processor runs the tune's code, just like back in
 the day. Every C64 gets its own random pick, there is no synchronisation between listeners. The catalogue has more than
 44,000 tunes from the HVSC.</p>
@@ -379,7 +379,7 @@ def render(st: State, ip: str, lang: str, message: str = "", ok: bool = False, v
     left = st.a.ttl - (time.time() - last) if (from_user and last) else 0.0
     msg = '<div class="msg %s" role="status">%s</div>' % ("ok" if ok else "err", html.escape(message)) if message else ""
     vals = {
-        "title": rainbow("JUKEBOX SID"),
+        "title": rainbow("SID JUKEBOX"),
         "lang": lang, "on_en": ' class="on" aria-current="true"' if lang == "en" else "", "on_fr": ' class="on" aria-current="true"' if lang == "fr" else "",
         "source": T["src_visitor"] if from_user else T["src_default"],
         "next": fmt(wait_s) if wait_s else T["now"], "now": T["now"],

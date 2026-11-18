@@ -1,4 +1,4 @@
-# Jukebox SID pour C64 Ultimate
+# SID Jukebox pour C64 Ultimate
 
 🇫🇷 Français · [🇬🇧 English](README.md)
 

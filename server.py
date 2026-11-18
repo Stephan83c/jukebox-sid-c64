@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serveur jukebox SID : tirage aléatoire, un morceau par demande, sans état partagé.
+"""Serveur SID Jukebox : tirage aléatoire, un morceau par demande, sans état partagé.
 
 Protocole texte (une commande par ligne, réponses terminées par \\n) :
     RANDOM [motif]   -> OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année|scroller\\n

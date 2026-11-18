@@ -7,7 +7,7 @@ Chaque lettre est dessinée avec une police grasse du PC, seuillée en noir et b
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
-TEXT = "JUKEBOX SID"
+TEXT = "SID JUKEBOX"
 FONT = sys.argv[1] if len(sys.argv) > 1 else "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 SIZE = int(sys.argv[2]) if len(sys.argv) > 2 else 19
 COL0 = 9                      # première colonne du logo à l'écran (11 lettres x 2 = 22 colonnes)

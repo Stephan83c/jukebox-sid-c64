@@ -2,7 +2,7 @@
 # Installation : cp deploy/jukebox.service ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user restart jukebox
 # Ne pas redémarrer pendant qu'un C64 est connecté (voir README).
 [Unit]
-Description=Jukebox SID serveur
+Description=SID Jukebox serveur
 
 [Service]
 WorkingDirectory=%h/jukebox

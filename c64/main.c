@@ -32,7 +32,7 @@ extern unsigned char demo_data[];
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
-static char d_scroll[] = "          JUKEBOX SID  ***  A SID RADIO FOR THE COMMODORE ULTIMATE  ***  CODED BY STEPHAN  ***  TUNES FROM THE HVSC  ***  HELLO CLAUDE, THANKS FOR THE HELP !          ";
+static char d_scroll[] = "          SID JUKEBOX  ***  A SID RADIO FOR THE COMMODORE ULTIMATE  ***  CODED BY STEPHAN  ***  TUNES FROM THE HVSC  ***  HELLO CLAUDE, THANKS FOR THE HELP !          ";
 #endif
 
 static unsigned char chunk[128];
@@ -412,7 +412,7 @@ static void ecran(void)
     bgcolor(COLOR_BLACK);
     textcolor(COLOR_WHITE);
     debut(0);
-    cputs("JUKEBOX SID");
+    cputs("SID JUKEBOX");
     debut(1);
     textcolor(COLOR_LIGHTBLUE);
     cputs("SERVER ");
