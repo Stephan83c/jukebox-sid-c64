@@ -143,58 +143,105 @@ def fmt(s: float) -> str:
     return "%d min %02d s" % (s // 60, s % 60) if s >= 60 else "%d s" % s
 
 
+RAINBOW = ["#d9548f", "#d98a3d", "#f2e24b", "#8be36b", "#63d9c9", "#7b7cf2", "#4a4ad9", "#b44fd6"]
+
 PAGE = """<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Jukebox SID - scroller</title>
+<title>JUKEBOX SID - SCROLLER</title>
 <style>
-:root{{color-scheme:dark;--bg:#40318d;--fg:#b8b8ff;--ac:#ffd34d;--bx:#352879}}
-body{{background:var(--bg);color:var(--fg);font:16px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:16px}}
-main{{max-width:720px;margin:0 auto}} h1{{color:var(--ac);font-size:1.3rem}}
-.cur{{background:#000;color:#7bd88f;padding:12px;word-break:break-word;border:2px solid var(--fg)}}
-textarea{{width:100%;box-sizing:border-box;font:inherit;text-transform:uppercase;background:var(--bx);color:#fff;
-border:2px solid var(--fg);padding:8px}}
-button{{font:inherit;background:var(--ac);color:#000;border:0;padding:8px 16px;cursor:pointer}}
-button:disabled{{opacity:.4;cursor:not-allowed}}
-.msg{{padding:8px;margin:12px 0}} .ok{{background:#1b5e20;color:#fff}} .err{{background:#7f1d1d;color:#fff}}
-small{{opacity:.85}} .hp{{position:absolute;left:-9999px}}
+:root{color-scheme:dark;--bg:#000;--lb:#8b8bff;--yl:#f2f27a;--rd:#d9548f;--gr:#8be36b}
+*{box-sizing:border-box}
+body{background:#0b0b1e;color:var(--lb);margin:0;padding:12px;min-height:100vh;
+font:18px/1.35 "C64 Pro Mono","Press Start 2P",ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;
+text-transform:uppercase;letter-spacing:.06em}
+main{max-width:760px;margin:0 auto;background:var(--bg);padding:28px 24px 24px;
+border:10px solid #3a3aa8;border-radius:6px}
+h1{font-size:2.1rem;text-align:center;margin:4px 0 26px;letter-spacing:.35em;font-weight:700}
+.row{margin:2px 0}.lab{color:var(--lb)}.val{color:var(--yl)}
+.sp{height:22px}
+.bar{height:5px;margin:7px 0;background:linear-gradient(90deg,#d9548f 0 14%,#d98a3d 14% 28%,#f2e24b 28% 42%,
+#8be36b 42% 56%,#63d9c9 56% 70%,#7b7cf2 70% 84%,#4a4ad9 84% 100%)}
+.scr{overflow:hidden;white-space:pre;margin:22px 0;font-size:1.5rem;font-weight:700;border-top:2px solid #1d1d55;
+border-bottom:2px solid #1d1d55;padding:8px 0}
+.scr span.run{display:inline-block;padding-left:100%;animation:run var(--d) linear infinite;animation-delay:calc(var(--d) * -.12)}
+@keyframes run{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.scr{white-space:normal}.scr span.run{padding:0;animation:none}}
+textarea{width:100%;font:inherit;text-transform:uppercase;letter-spacing:inherit;background:#000;color:var(--yl);
+border:2px solid var(--lb);padding:8px;border-radius:0;resize:vertical;caret-color:var(--gr)}
+textarea:focus{outline:2px solid var(--yl);outline-offset:2px}
+button{font:inherit;letter-spacing:inherit;text-transform:uppercase;background:var(--lb);color:#000;border:0;
+padding:8px 18px;cursor:pointer}
+button:hover:not(:disabled){background:var(--yl)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.msg{padding:8px 10px;margin:14px 0;color:#000}.ok{background:var(--gr)}.err{background:var(--rd)}
+.help{color:#6a6ad0;font-size:.8rem;line-height:1.6;text-transform:none;letter-spacing:.02em}
+.keys{margin-top:24px;color:#9a9aa8}.hp{position:absolute;left:-9999px}
+.cnt{color:var(--yl)}
+@media (max-width:520px){body{font-size:14px;padding:6px}main{padding:18px 12px;border-width:6px}
+h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </style></head><body><main>
-<h1>JUKEBOX SID : le scroller</h1>
-<p>Texte actuel ({source}) :</p>
-<p class="cur">{current}</p>
-{message}
+<h1>@@title@@</h1>
+<div class="row"><span class="lab">TEXTE:</span> <span class="val">@@source@@</span></div>
+<div class="row"><span class="lab">PROCHAIN CHANGEMENT:</span> <span class="val">@@next@@</span></div>
+<div class="row"><span class="lab">RETOUR AU DEFAUT:</span> <span class="val">@@reset@@</span></div>
+<div class="sp"></div>
+<div class="bar"></div><div class="bar"></div><div class="bar"></div>
+<div class="scr" aria-label="@@current_plain@@" style="--d:@@dur@@s"><span class="run" aria-hidden="true">@@current@@</span></div>
+@@message@@
 <form method="post" action="/">
-<p><label for="t">Nouveau texte : majuscules, {allowed}, {max} caractères au plus.</label></p>
-<textarea id="t" name="t" rows="3" maxlength="{max}" autocomplete="off" required>{value}</textarea>
-<p><small><span id="n">0</span> / {max}</small></p>
-<input type="hidden" name="k" value="{token}">
+<div class="row"><label class="lab" for="t">NOUVEAU TEXTE:</label></div>
+<textarea id="t" name="t" rows="3" maxlength="@@max@@" autocomplete="off" required>@@value@@</textarea>
+<div class="row"><span class="lab">CARACTERES:</span> <span class="cnt"><span id="n">0</span> / @@max@@</span></div>
+<input type="hidden" name="k" value="@@token@@">
 <input class="hp" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
-<button id="b" {disabled}>Envoyer</button> <small>{wait}</small>
+<div class="sp"></div>
+<button @@disabled@@>ENVOYER</button>
 </form>
-<p><small>Une modification toutes les 3 minutes pour tout le monde. Sans nouveau texte pendant 1 heure, le
-message par défaut revient. Le nouveau texte apparaît à partir du morceau suivant, pas tout de suite.</small></p>
+<p class="help">Majuscules, @@allowed@@, @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
+tout le monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le C64
+au morceau suivant, pas tout de suite.</p>
+<div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
 </main>
 <script>
 var t=document.getElementById('t'),n=document.getElementById('n');
-function up(){{var p=t.selectionStart;t.value=t.value.toUpperCase();t.setSelectionRange(p,p);n.textContent=t.value.length}}
+function up(){var p=t.selectionStart;t.value=t.value.toUpperCase();t.setSelectionRange(p,p);n.textContent=t.value.length}
 t.addEventListener('input',up);up();
 </script></body></html>
 """
+
+
+def rainbow(text: str, shift: int = 0) -> str:
+    """Une couleur par lettre, comme le titre du jukebox sur le C64 (les espaces gardent leur place)."""
+    out, i = [], 0
+    for c in text:
+        if c == " ":
+            out.append(" ")
+        else:
+            out.append('<span style="color:%s">%s</span>' % (RAINBOW[(i + shift) % len(RAINBOW)], html.escape(c)))
+            i += 1
+    return "".join(out)
 
 
 def render(st: State, message: str = "", ok: bool = False, value: str = "") -> bytes:
     cur, from_user = st.current()
     last = st.last_change()
     wait_s = max(0.0, st.a.cooldown - (time.time() - last)) if last else 0.0
-    wait = "Prochain changement possible dans %s." % fmt(wait_s) if wait_s else ""
-    if from_user and last:
-        src = "écrit par un visiteur, retour au message par défaut dans %s" % fmt(st.a.ttl - (time.time() - last))
-    else:
-        src = "message par défaut"
+    left = st.a.ttl - (time.time() - last) if (from_user and last) else 0.0
     msg = '<div class="msg %s" role="status">%s</div>' % ("ok" if ok else "err", html.escape(message)) if message else ""
-    return PAGE.format(
-        source=html.escape(src), current=html.escape(cur) or "&nbsp;", message=msg, max=SCROLL_MAX,
-        allowed=html.escape(ALLOWED_TXT), value=html.escape(value), token=st.token(),
-        disabled="disabled" if wait_s else "", wait=html.escape(wait)).encode("utf-8")
+    vals = {
+        "title": rainbow("JUKEBOX SID"),
+        "source": "VISITEUR" if from_user else "PAR DEFAUT",
+        "next": fmt(wait_s) if wait_s else "MAINTENANT",
+        "reset": fmt(left) if left > 0 else "-",
+        "current": rainbow(cur or " ", 3),
+        "current_plain": html.escape(cur, quote=True),
+        "dur": str(max(12, int(len(cur) * 0.28))),
+        "message": msg, "max": str(SCROLL_MAX), "allowed": html.escape(ALLOWED_TXT),
+        "value": html.escape(value), "token": st.token(),
+        "disabled": "disabled" if wait_s else "",
+    }
+    # une seule passe : le texte saisi par un visiteur n'est jamais réinterprété comme un champ
+    return re.sub(r"@@(\w+)@@", lambda m: vals[m.group(1)], PAGE).encode("utf-8")
 
 
 class Handler(BaseHTTPRequestHandler):
