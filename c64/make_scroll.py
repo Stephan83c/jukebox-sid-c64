@@ -5,13 +5,7 @@ Les formes viennent de la vraie police du C64 (chargen_set1.bin, extraite de VIC
 (8 lignes -> 12). Le texte est ici : un octet par colonne de 8 pixels (0 = espace, n = n-ième lettre
 distincte, $FF = fin). Codes de caractères utilisés : 64 + 2 * (n - 1) (haut) et +1 (bas).
 """
-TEXT = ("          JUKEBOX SID  ***  A SID RADIO FOR THE COMMODORE 64 ULTIMATE  ***  "
-        "CODED BY STEPHAN  ***  "
-        "TUNES FROM THE HIGH VOLTAGE SID COLLECTION  ***  "
-        "PRESS S TO SEARCH BY ARTIST OR TITLE  ***  PRESS SPACE FOR THE NEXT TUNE  ***  "
-        "PRESS V TO SWITCH THE VU METERS ON OR OFF  ***  PRESS Q TO QUIT  ***  "
-        "STEPHAN PRESENTS JUKEBOX SID  ***  "
-        "GREETINGS TO THE C64 SCENE  ***  KEEP THE SID ALIVE  ***  MADE BY STEPHAN  ***          ")
+TEXT = "          JUKEBOX SID  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "   # texte de secours (le vrai vient du serveur : scroll.txt)
 rom = open("chargen_set1.bin", "rb").read()
 
 def screen_code(ch):
@@ -19,8 +13,9 @@ def screen_code(ch):
         return ord(ch) - 64
     return ord(ch)            # chiffres, ponctuation : même code que l'ASCII
 
-order = sorted(set(TEXT) - {" "})
-assert len(order) <= 32, order
+# Alphabet FIXE (32 glyphes) : le texte reçu du serveur est traduit avec la même table (voir main.c).
+order = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?-")
+assert set(TEXT) - {" "} <= set(order), set(TEXT) - set(order)
 glyphs = bytearray()
 for ch in order:
     g = rom[screen_code(ch) * 8: screen_code(ch) * 8 + 8]

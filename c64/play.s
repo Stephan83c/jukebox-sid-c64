@@ -25,6 +25,7 @@
 
         .macpack cbm
         .export _play_run, _init_addr, _play_addr, _frames_max, _song_nr, _fps, _vis_on
+        .export _scr_ptr, _scr_ok
         .import logo_glyphs, logo_row0, logo_row1, scr_glyphs, scrtext
 
 
@@ -68,6 +69,8 @@ stage:       .res 1         ; 0 = avant le scroller, 1 = après, 2 = le morceau
 tpos:        .res 2         ; prochain caractère du texte
 sbuf:        .res 40        ; texte visible du scroller, ligne du haut (la RAM sous le KERNAL ne peut pas être relue)
 sbufb:       .res 40        ; ligne du bas
+_scr_ok:     .res 1         ; 1 = texte du serveur à scr_ptr, 0 = texte intégré
+_scr_ptr:    .res 2         ; texte du scroller reçu : indices de glyphes, $FF = fin (dans l'en-tête de main.c)
 nbot:        .res 1         ; code de la case du bas du caractère suivant
 
         .rodata
@@ -338,6 +341,21 @@ put:    sta     addr,x
 ; Colonne suivante du scroller : A = case du haut, nbot = case du bas. Le texte est un flux d'indices
 ; (0 = espace, n = n-ième lettre, $FF = fin, on recommence) ; la lettre n occupe les codes
 ; 64 + 2 * (n - 1) (haut) et le suivant (bas). N'utilise ni X ni Y.
+; Début du texte : celui du serveur s'il y en a un, sinon le texte intégré. N'utilise que A.
+scr_rewind:
+        lda     _scr_ok
+        beq     @def
+        lda     _scr_ptr
+        sta     tpos
+        lda     _scr_ptr + 1
+        sta     tpos + 1
+        rts
+@def:   lda     #<scrtext
+        sta     tpos
+        lda     #>scrtext
+        sta     tpos + 1
+        rts
+
 next_char:
         lda     tpos
         sta     @rd + 1
@@ -346,10 +364,7 @@ next_char:
 @rd:    lda     a:$0000
         cmp     #$FF
         bne     @ok
-        lda     #<scrtext
-        sta     tpos
-        lda     #>scrtext
-        sta     tpos + 1
+        jsr     scr_rewind
         jmp     next_char
 @ok:    inc     tpos
         bne     @x
@@ -627,10 +642,7 @@ _play_run:
         sta     stage           ; (A = 0) première interruption : avant le scroller
         lda     #7
         sta     xs
-        lda     #<scrtext
-        sta     tpos
-        lda     #>scrtext
-        sta     tpos + 1
+        jsr     scr_rewind
         ldx     #0              ; ligne du scroller déjà remplie de texte
 @pf:    jsr     next_char
         sta     sbuf,x

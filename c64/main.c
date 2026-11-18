@@ -22,6 +22,7 @@
 
 extern unsigned init_addr, play_addr, frames_max;
 extern unsigned char fps, vis_on;
+extern unsigned char *scr_ptr, scr_ok;
 extern unsigned char song_nr;
 unsigned char play_run(void);
 
@@ -38,7 +39,7 @@ static char filtre[31];          /* recherche en cours (ASCII majuscule), vide =
 static unsigned char nfiltre;
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
 static char cmdr[48];
-static char hdr[176];
+static char hdr[340];   /* en-tête OK|... : titre, auteur, année, texte du scroller (170 au plus) */
 
 static unsigned t_id, t_size, t_secs, t_load, t_fps;
 static char *t_title, *t_author, *t_released;
@@ -98,7 +99,41 @@ static unsigned nombre(const char *s)
     return n;
 }
 
-/* OK|id|taille|secondes|sous-morceau|chargement|init|play|titre|auteur|année */
+/* Texte du scroller reçu (ASCII, dans l'en-tête) : converti SUR PLACE en indices de glyphes
+   (make_scroll.py) : A-Z = 1-26, * . , ! ? - = 27-32, le reste = espace (0) ; $FF à la fin.
+   Le serveur fournit déjà les 10 espaces avant et après. */
+static void charger_scroll(char *s)
+{
+    unsigned char n = 0, c, i;
+    scr_ok = 0;
+    while (s[n]) {
+        c = s[n];
+        if (c >= 97 && c <= 122) {
+            c -= 32;
+        }
+        if (c >= 65 && c <= 90) {
+            i = c - 64;
+        } else {
+            switch (c) {
+            case 42: i = 27; break;   /* * */
+            case 46: i = 28; break;   /* . */
+            case 44: i = 29; break;   /* , */
+            case 33: i = 30; break;   /* ! */
+            case 63: i = 31; break;   /* ? */
+            case 45: i = 32; break;   /* - */
+            default: i = 0;
+            }
+        }
+        s[n++] = i;
+    }
+    if (n) {
+        s[n] = 0xFF;
+        scr_ptr = (unsigned char *)s;
+        scr_ok = 1;
+    }
+}
+
+/* OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année|scroller */
 static unsigned char analyser(void)
 {
     char *p = hdr;
@@ -117,6 +152,7 @@ static unsigned char analyser(void)
     t_title = champ(&p);
     t_author = champ(&p);
     t_released = champ(&p);
+    charger_scroll(champ(&p));
     /* ne jamais écrire hors de la zone libre */
     if (t_size == 0 || t_load < MEM_BAS || t_load > MEM_HAUT ||
         t_size > MEM_HAUT - t_load + 1u || song_nr == 0) {

@@ -2,7 +2,7 @@
 """Serveur jukebox SID : tirage aléatoire, un morceau par demande, sans état partagé.
 
 Protocole texte (une commande par ligne, réponses terminées par \\n) :
-    RANDOM [motif]   -> OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année\\n
+    RANDOM [motif]   -> OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année|scroller\\n
                         + <taille> octets de code brut (sans en-tête PSID), à copier à l'adresse de chargement
                         (motif : sous-chaîne cherchée dans l'auteur ou le titre, sans tenir compte de la casse)
     GET <id>         -> idem pour un morceau précis
@@ -14,6 +14,7 @@ import argparse
 import asyncio
 import logging
 import sqlite3
+import unicodedata
 from pathlib import Path
 
 log = logging.getLogger("jukebox")
@@ -25,8 +26,26 @@ def clean(s: str) -> str:
     return " ".join((s or "").replace("|", "/").split())
 
 
+SCROLL_ALPHABET = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?- ")
+SCROLL_MAX = 150
+
+
+def scroll_text(path: Path) -> str:
+    """Texte du scroller : relu à chaque morceau, réduit à l'alphabet du C64 (A-Z * . , ! ? -),
+    sur une seule ligne, 150 caractères au plus, avec 10 espaces avant et après (le texte entre par la droite). Fichier absent ou vide : le C64 garde son texte."""
+    try:
+        raw = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    raw = unicodedata.normalize("NFKD", raw).upper()       # é -> E
+    txt = "".join(c if c in SCROLL_ALPHABET else " " for c in raw)
+    txt = " ".join(txt.split())[:SCROLL_MAX].strip()
+    return " " * 10 + txt + " " * 10 if txt else ""
+
+
 class Jukebox:
-    def __init__(self, db: Path, root: Path):
+    def __init__(self, db: Path, root: Path, scroll: Path | None = None):
+        self.scroll = scroll
         self.con = sqlite3.connect(db, check_same_thread=False)
         self.con.row_factory = sqlite3.Row
         self.root = root
@@ -55,7 +74,7 @@ class Jukebox:
         return p.read_bytes()
 
 
-async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row):
+async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row, scroll: Path | None = None):
     if row is None:
         w.write(b"ERR|aucun morceau\n")
         return
@@ -67,10 +86,11 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row):
     data = data[off:]
     secs = int(row["seconds"] or DEFAULT_SECONDS)
     fps = 60 if row["clock"] == "NTSC" else 50     # cadence pour laquelle le morceau est écrit
-    head = "OK|%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s\n" % (
+    head = "OK|%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s|%s\n" % (
         row["id"], len(data), secs, fps, row["start_song"],
         row["load_addr"], row["init_addr"], row["play_addr"],
-        clean(row["title"]), clean(row["author"]), clean(row["released"]))
+        clean(row["title"])[:40], clean(row["author"])[:40], clean(row["released"])[:20],
+        scroll_text(scroll) if scroll else "")
     w.write(head.encode("latin-1", "replace") + data)
 
 
@@ -89,9 +109,9 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
                 row = jb.pick(arg[:40] or None)
                 if row:
                     log.info("%s RANDOM %r -> %s", peer, arg, row["path"])
-                await send_tune(w, jb, row)
+                await send_tune(w, jb, row, jb.scroll)
             elif cmd == "GET" and arg.isdigit():
-                await send_tune(w, jb, jb.get(int(arg)))
+                await send_tune(w, jb, jb.get(int(arg)), jb.scroll)
             elif cmd == "STATS":
                 ok, total = jb.stats()
                 w.write(f"STATS|{ok}|{total}\n".encode())
@@ -111,11 +131,13 @@ async def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--db", type=Path, default=Path("jukebox.db"))
     ap.add_argument("--root", type=Path, required=True, help="dossier C64Music")
+    ap.add_argument("--scroll", type=Path, default=Path(__file__).resolve().parent / "scroll.txt",
+                    help="texte du scroller (relu à chaque morceau)")
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=6474)
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-    jb = Jukebox(a.db, a.root)
+    jb = Jukebox(a.db, a.root, a.scroll)
     srv = await asyncio.start_server(lambda r, w: handle(r, w, jb), a.host, a.port)
     ok, total = jb.stats()
     log.info("jukebox sur %s:%d, %d morceaux compatibles sur %d", a.host, a.port, ok, total)
