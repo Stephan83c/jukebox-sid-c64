@@ -66,7 +66,7 @@ Plus le client est gros, plus il monte dans la mémoire et moins il reste de pla
 | `$A700` | 44 503 | 13 glyphes de plus au scroller (`/` `'` `:` `0-9`) |
 
 Motifs de rejet (version actuelle) : plage mémoire incompatible, morceaux cadencés par un timer CIA,
-RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
+RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture, **décompresseur au démarrage** (voir plus bas).
 
 ## Impasses et leçons
 
@@ -74,6 +74,13 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
   une adresse relue sous la ROM, des instructions modifiées en cours de route) ; sans lui, on aurait tâtonné.
 - Un morceau de démo qui plante n'est pas forcément la faute du lecteur : *Thrust* (HVSC) a un en-tête
   qui ne correspond pas à son code.
+- **Des morceaux se décompressent dans la mémoire du client.** 108 « worktunes » de `Blues_Muz` (Gallefoss, Røstøen…) ont une
+  `init` qui est un décompresseur : elle lit ses données à la fin du fichier et les décompresse en descendant depuis `$CFFF`,
+  donc par-dessus le client ($A700-$CFFF). Le client est écrasé, le processeur exécute des données et le C64 se fige avant
+  l'affichage du lecteur (écran d'info resté en mode texte, `D018=$15`). Trouvé le 2026-11-18 en reproduisant dans VICE
+  (*Piano - 25W05*), en suivant l'init pas à pas puis en lisant les pointeurs de copie `$AE/$FB`. L'indexeur les rejette
+  (`unpacker` : code commençant par `SEI / LDA #$35 / STA $01 / JSR`). Une vraie parade générale demanderait d'émuler
+  l'`init` et de refuser tout morceau qui écrit au-dessus de `HISTART` : à faire si d'autres cas apparaissent.
 - **La pile C de cc65 était dans la zone des morceaux.** Le démarrage de cc65 place le sommet de la pile à
   `__MAIN_START__ + __MAIN_SIZE__` ; avec notre configuration (zone `MAIN` de 64 octets pour le lanceur BASIC) cela
   donnait `$084D` : chaque appel de fonction écrasait `$082D-$0847`, donc le début des 156 morceaux chargés à `$0800`.

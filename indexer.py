@@ -70,11 +70,14 @@ def parse_sid(data: bytes):
         info["sid2"] = data[0x7A]
         info["sid3"] = data[0x7B] if version >= 4 else 0
     payload = len(data) - data_off
+    code_off = data_off
     if load == 0:  # l'adresse est dans les deux premiers octets des données
         if payload < 2:
             return None
         load = data[data_off] | (data[data_off + 1] << 8)
         payload -= 2
+        code_off += 2
+    info["head"] = bytes(data[code_off:code_off + 6])     # premiers octets du code du morceau
     info["load"] = load
     info["end"] = load + payload - 1
     info["payload"] = payload
@@ -83,6 +86,11 @@ def parse_sid(data: bytes):
     info["clock"] = {0: "?", 1: "PAL", 2: "NTSC", 3: "PAL+NTSC"}[(f >> 2) & 3]
     info["model"] = {0: "?", 1: "6581", 2: "8580", 3: "6581+8580"}[(f >> 4) & 3]
     return info
+
+
+# SEI ; LDA #$35 ; STA $01 ; JSR : enveloppe de morceaux compressés (ex. les « worktunes » de Blues_Muz) dont
+# l'init décompresse vers le haut de la mémoire. 108 morceaux de la HVSC #85, tous dans ce cas (vérifié dans VICE).
+UNPACKER_HEAD = bytes.fromhex("78a935850120")
 
 
 def reject_reason(info, size, a) -> str | None:
@@ -102,6 +110,8 @@ def reject_reason(info, size, a) -> str | None:
         return "no_songs"
     if info["play"] == 0:
         return "play0"          # le morceau installe lui-même son interruption
+    if info["head"] == UNPACKER_HEAD:
+        return "unpacker"       # décompresse ses données jusqu'à $CFFF : écraserait le client C64
     bit = min(info["start_song"], 32) - 1
     if (info["speed"] >> bit) & 1:
         return "cia"            # cadencé par le timer CIA, pas à chaque image
