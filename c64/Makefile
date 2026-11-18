@@ -9,7 +9,7 @@ PRG := build/jukebox.prg
 CFLAGS := -t c64 -O -C jukebox.cfg -Wl -D,__HISTART__=$(HISTART) \
   -DSERVEUR_IP='"$(SERVEUR_IP)"' -DSERVEUR_PORT=$(SERVEUR_PORT) -DMAX_SECS=$(MAX_SECS)
 
-.PHONY: all deploy clean demo
+.PHONY: all deploy clean demo release
 .DEFAULT_GOAL := all
 
 # Version de démonstration : un morceau intégré, sans réseau (pour VICE) ; voir make_demo.py
@@ -33,6 +33,13 @@ $(PRG): build/options main.c uci.c uci.h ascii.h play.s boot.s logo.s scroll.s j
 # Aucun socket n'est ouvert pendant la lecture : on peut redéployer à tout moment.
 deploy: $(PRG)
 	curl -sS -X POST --data-binary @$(PRG) http://$(ULTIMATE)/v1/runners:run_prg
+
+# Usage : make release TAG=v1.3  (compile avec les réglages par défaut et joint le .prg à la release GitHub)
+REPO ?= Stephan83c/jukebox-sid-c64
+release: $(PRG)
+	@test -n "$(TAG)" || { echo "usage: make release TAG=vX.Y"; exit 1; }
+	cp $(PRG) build/jukebox-boombass.prg
+	gh release upload $(TAG) build/jukebox-boombass.prg --clobber -R $(REPO)
 
 clean:
 	rm -rf build *.o
