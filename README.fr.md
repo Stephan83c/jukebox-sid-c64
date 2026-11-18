@@ -65,7 +65,7 @@ requête : on le modifie sans redémarrer, et le nouveau texte arrive **au morce
 contacte pas le serveur pendant la lecture).
 
 - Alphabet : `A-Z 0-9 * . , ! ? - / ' :` (45 glyphes) ; minuscules mises en majuscules, accents retirés, le reste
-  devient un espace. Pas de chiffres.
+  devient un espace.
 - 150 caractères au plus ; le serveur ajoute 10 espaces avant et après.
 - Fichier absent ou vide : le C64 affiche son court texte intégré.
 

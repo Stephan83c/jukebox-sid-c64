@@ -65,7 +65,7 @@ request: edit it without restarting, and the new text shows up **with the next t
 the server while playing).
 
 - Alphabet: `A-Z 0-9 * . , ! ? - / ' :` (45 glyphs); lower case is upper-cased, accents are stripped, anything else
-  becomes a space. No digits.
+  becomes a space.
 - At most 150 characters; the server adds 10 spaces before and after.
 - Missing or empty file: the C64 shows its short built-in text.
 

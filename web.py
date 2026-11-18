@@ -195,6 +195,16 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .help{color:#6a6ad0;font-size:.8rem;line-height:1.6;text-transform:none;letter-spacing:.02em}
 .keys{margin-top:24px;color:#9a9aa8}.hp{position:absolute;left:-9999px}
 .cnt{color:var(--yl)}
+.about{margin-top:30px;border-top:2px solid #1d1d55;padding-top:18px}
+.about h2{color:var(--yl);font-size:1.05rem;letter-spacing:.2em;margin:0 0 12px}
+.about h2:not(:first-child){margin-top:22px}
+.about p,.about li{text-transform:none;letter-spacing:.02em;font-size:.88rem;line-height:1.65;color:#b9b9ff}
+.about ol,.about ul{padding-left:22px;margin:8px 0}
+.about a{color:var(--yl)}.about b{color:#fff;font-weight:700}
+.about code{background:#14143a;padding:1px 5px;color:var(--gr);word-break:break-all}
+a.dl{display:inline-block;margin:8px 0 4px;background:var(--yl);color:#000;padding:9px 16px;text-decoration:none;font-weight:700;
+text-transform:uppercase;letter-spacing:.06em}
+a.dl:hover,a.dl:focus{background:var(--lb)}
 @media (max-width:520px){body{font-size:14px;padding:6px}main{padding:18px 12px;border-width:6px}
 h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </style></head><body><main>
@@ -219,6 +229,34 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 <p class="help">Majuscules, @@allowed@@ ; @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
 tout le monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le C64
 au morceau suivant, pas tout de suite.</p>
+<section class="about" aria-labelledby="ab">
+<h2 id="ab">C'EST QUOI, CE JUKEBOX ?</h2>
+<p><b>Jukebox SID</b> est une radio de musiques SID pour le <b>C64 Ultimate</b>. Ton C64 demande un morceau au
+hasard à ce serveur, le reçoit par le réseau, puis le <b>joue lui-même</b> : c'est son processeur 6510 qui exécute le
+code du morceau, comme à l'époque. Chaque C64 a son propre tirage, il n'y a pas de synchronisation entre les
+auditeurs. Le catalogue compte plus de 44 000 morceaux de la HVSC.</p>
+<p>L'écran de lecture montre le titre, l'artiste, l'année, le temps écoulé, trois vu-mètres (un par voix du SID) et
+un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette page.</b></p>
+<h2>L'ESSAYER</h2>
+<ol>
+<li>Il te faut un <b>C64 Ultimate</b> relié à Internet, avec la <i>Command Interface</i> activée.</li>
+<li>Télécharge le client C64, le fichier <code>jukebox-boombass.prg</code>, dans les releases GitHub :<br>
+<a class="dl" href="https://github.com/Stephan83c/jukebox-sid-c64/releases/latest" target="_blank" rel="noopener noreferrer">Télécharger le client</a></li>
+<li>Lance-le sur l'Ultimate : depuis une clé USB ou une carte SD, ou par le réseau avec
+<code>curl -X POST --data-binary @jukebox-boombass.prg http://IP-DE-TON-ULTIMATE/v1/runners:run_prg</code></li>
+<li>Il se connecte tout seul à ce serveur (<code>boombass.net</code>, port 6474) et joue un morceau au hasard.</li>
+</ol>
+<h2>LES TOUCHES</h2>
+<ul>
+<li><code>ESPACE</code> morceau suivant</li>
+<li><code>S</code> recherche par artiste ou titre (RETURN valide, RUN/STOP annule)</li>
+<li><code>C</code> efface la recherche &nbsp; <code>V</code> vu-mètres on/off &nbsp; <code>Q</code> retour au BASIC</li>
+</ul>
+<p>Le code source (serveur Python et client C) est sur
+<a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
+Les morceaux viennent de la <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
+Collection</a> ; ils restent la propriété de leurs auteurs et ne sont pas inclus dans le client.</p>
+</section>
 <div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
 </main>
 <script>
