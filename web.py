@@ -26,7 +26,7 @@ import time
 import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 
 from server import SCROLL_ALPHABET, SCROLL_MAX, ipkey
 
@@ -41,7 +41,6 @@ RATE_WINDOW, RATE_MAX = 60, 30      # requêtes par IP et par minute
 MAX_THREADS = 64                    # connexions traitées en même temps ; au-delà, refus immédiat
 
 SPECIALS = ". , ! ? * - / ' :"
-ALLOWED_TXT = "A-Z, 0-9, " + SPECIALS + " et espace"
 APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u00b4": "'", "`": "'", "\u02bc": "'"})   # apostrophes des claviers de téléphone
 
 
@@ -125,19 +124,20 @@ def normalize(raw: str) -> str:
     return " ".join(raw.split())
 
 
-def check_text(st: State, raw: str) -> tuple[str | None, str]:
-    """(texte propre, message d'erreur)"""
+def check_text(st: State, raw: str, lang: str = "en") -> tuple[str | None, str]:
+    """(texte propre, message d'erreur dans la langue du visiteur)"""
+    m = MSG[lang]
     txt = normalize(raw)
     bad = sorted({c for c in txt if c not in SCROLL_ALPHABET})
     if bad:
-        return None, "Caractères non autorisés : %s. Autorisés : %s." % (" ".join(bad)[:30], ALLOWED_TXT)
+        return None, m["badchars"] % (" ".join(bad)[:30], ALLOWED[lang])
     if len(txt) < MIN_LEN:
-        return None, "Texte trop court (%d caractères au moins)." % MIN_LEN
+        return None, m["short"] % MIN_LEN
     if len(txt) > SCROLL_MAX:
-        return None, "Texte trop long : %d caractères, %d au plus." % (len(txt), SCROLL_MAX)
+        return None, m["long"] % (len(txt), SCROLL_MAX)
     letters = re.sub(r"[^A-Z]", "", txt)
     if any(w in letters for w in map(lambda w: re.sub(r"[^A-Z]", "", w), st.words())):
-        return None, "Ce texte contient un mot interdit."
+        return None, m["banned"]
     return txt, ""
 
 
@@ -164,7 +164,7 @@ def fmt(s: float) -> str:
 RAINBOW = ["#d9548f", "#d98a3d", "#f2e24b", "#8be36b", "#63d9c9", "#7b7cf2", "#4a4ad9", "#b44fd6"]
 
 PAGE = """<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="@@lang@@"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>JUKEBOX SID - SCROLLER</title>
 <style>
 :root{color-scheme:dark;--bg:#000;--lb:#8b8bff;--yl:#f2f27a;--rd:#d9548f;--gr:#8be36b}
@@ -205,31 +205,48 @@ button:disabled{opacity:.35;cursor:not-allowed}
 a.dl{display:inline-block;margin:8px 0 4px;background:var(--yl);color:#000;padding:9px 16px;text-decoration:none;font-weight:700;
 text-transform:uppercase;letter-spacing:.06em}
 a.dl:hover,a.dl:focus{background:var(--lb)}
+.lang{text-align:right;font-size:.85rem;margin:-12px 0 8px}.lang a{color:var(--lb);text-decoration:none;padding:0 2px}
+.lang a.on{color:var(--yl);text-decoration:underline}
 @media (max-width:520px){body{font-size:14px;padding:6px}main{padding:18px 12px;border-width:6px}
 h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </style></head><body><main>
+<nav class="lang" aria-label="Language"><a href="?lang=en"@@on_en@@>EN</a> | <a href="?lang=fr"@@on_fr@@>FR</a></nav>
 <h1>@@title@@</h1>
-<div class="row"><span class="lab">TEXTE:</span> <span class="val">@@source@@</span></div>
-<div class="row"><span class="lab">PROCHAIN CHANGEMENT:</span> <span class="val" id="nx" data-w="@@wait@@">@@next@@</span></div>
-<div class="row"><span class="lab">RETOUR AU DEFAUT:</span> <span class="val">@@reset@@</span></div>
+<div class="row"><span class="lab">@@lab_text@@</span> <span class="val">@@source@@</span></div>
+<div class="row"><span class="lab">@@lab_next@@</span> <span class="val" id="nx" data-w="@@wait@@" data-now="@@now@@">@@next@@</span></div>
+<div class="row"><span class="lab">@@lab_reset@@</span> <span class="val">@@reset@@</span></div>
 <div class="sp"></div>
 <div class="bar"></div><div class="bar"></div><div class="bar"></div>
 <div class="scr" aria-label="@@current_plain@@" style="--d:@@dur@@s"><span class="run" aria-hidden="true">@@current@@</span></div>
 @@message@@
 <form method="post" action="/">
-<div class="row"><label class="lab" for="t">NOUVEAU TEXTE:</label></div>
+<div class="row"><label class="lab" for="t">@@lab_new@@</label></div>
 <textarea id="t" name="t" rows="3" maxlength="@@max@@" autocomplete="off" required>@@value@@</textarea>
-<div class="row"><span class="lab">CARACTERES:</span> <span class="cnt"><span id="n">0</span> / @@max@@</span></div>
-<div class="row"><span class="lab">SPECIAUX:</span> <span class="val">@@specials@@</span> <span class="lab">+ CHIFFRES 0-9 ET ESPACE</span></div>
+<div class="row"><span class="lab">@@lab_chars@@</span> <span class="cnt"><span id="n">0</span> / @@max@@</span></div>
+<div class="row"><span class="lab">@@lab_spec@@</span> <span class="val">@@specials@@</span> <span class="lab">@@spec_more@@</span></div>
 <input type="hidden" name="k" value="@@token@@">
+<input type="hidden" name="lang" value="@@lang@@">
 <input class="hp" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div class="sp"></div>
-<button id="b" @@disabled@@>ENVOYER</button>
+<button id="b" @@disabled@@>@@btn@@</button>
 </form>
-<p class="help">Majuscules, @@allowed@@ ; @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
-tout le monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le C64
-au morceau suivant, pas tout de suite.</p>
-<section class="about" aria-labelledby="ab">
+<p class="help">@@help@@</p>
+@@about@@
+<div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
+</main>
+<script>
+var t=document.getElementById('t'),n=document.getElementById('n');
+function up(){var p=t.selectionStart;t.value=t.value.toUpperCase();t.setSelectionRange(p,p);n.textContent=t.value.length}
+t.addEventListener('input',up);up();
+var nx=document.getElementById('nx'),b=document.getElementById('b'),w=parseFloat(nx.dataset.w)||0,end=Date.now()+w*1000;
+function tick(){var r=Math.ceil((end-Date.now())/1000);
+if(r<=0){nx.textContent=nx.dataset.now;b.disabled=false;return}
+nx.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(tick,250)}
+if(w>0)tick();
+</script></body></html>
+"""
+
+ABOUT_FR = """<section class="about" aria-labelledby="ab">
 <h2 id="ab">C'EST QUOI, CE JUKEBOX ?</h2>
 <p><b>Jukebox SID</b> est une radio de musiques SID pour le <b>C64 Ultimate</b>. Ton C64 demande un morceau au
 hasard à ce serveur, le reçoit par le réseau, puis le <b>joue lui-même</b> : c'est son processeur 6510 qui exécute le
@@ -256,20 +273,89 @@ un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette pa
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
 Les morceaux viennent de la <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
 Collection</a> ; ils restent la propriété de leurs auteurs et ne sont pas inclus dans le client.</p>
-</section>
-<div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
-</main>
-<script>
-var t=document.getElementById('t'),n=document.getElementById('n');
-function up(){var p=t.selectionStart;t.value=t.value.toUpperCase();t.setSelectionRange(p,p);n.textContent=t.value.length}
-t.addEventListener('input',up);up();
-var nx=document.getElementById('nx'),b=document.getElementById('b'),w=parseFloat(nx.dataset.w)||0,end=Date.now()+w*1000;
-function tick(){var r=Math.ceil((end-Date.now())/1000);
-if(r<=0){nx.textContent='MAINTENANT';b.disabled=false;return}
-nx.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(tick,250)}
-if(w>0)tick();
-</script></body></html>
-"""
+</section>"""
+
+ABOUT_EN = """<section class="about" aria-labelledby="ab">
+<h2 id="ab">WHAT IS THIS JUKEBOX?</h2>
+<p><b>Jukebox SID</b> is a SID music radio for the <b>C64 Ultimate</b>. Your C64 asks this server for a random tune,
+receives it over the network, then <b>plays it itself</b>: its own 6510 processor runs the tune's code, just like back in
+the day. Every C64 gets its own random pick, there is no synchronisation between listeners. The catalogue has more than
+44,000 tunes from the HVSC.</p>
+<p>The playback screen shows the title, the artist, the year, the elapsed time, three level meters (one per SID voice)
+and a scroller. <b>The scroller text is the one you change on this page.</b></p>
+<h2>TRY IT</h2>
+<ol>
+<li>You need a <b>C64 Ultimate</b> connected to the Internet, with the <i>Command Interface</i> enabled.</li>
+<li>Download the C64 client, the file <code>jukebox-sid.prg</code>, from the GitHub releases:<br>
+<a class="dl" href="https://github.com/Stephan83c/jukebox-sid-c64/releases/latest" target="_blank" rel="noopener noreferrer">Download the client</a></li>
+<li>Run it on the Ultimate: from a USB stick or an SD card, or over the network with
+<code>curl -X POST --data-binary @jukebox-sid.prg http://YOUR-ULTIMATE-IP/v1/runners:run_prg</code></li>
+<li>It connects to this server by itself (<code>boombass.net</code>, port 6474) and plays a random tune.</li>
+</ol>
+<h2>KEYS</h2>
+<ul>
+<li><code>SPACE</code> next tune</li>
+<li><code>S</code> search by artist or title (RETURN confirms, RUN/STOP cancels)</li>
+<li><code>C</code> clears the search &nbsp; <code>V</code> level meters on/off &nbsp; <code>Q</code> back to BASIC</li>
+</ul>
+<p>The source code (Python server and C client) is on
+<a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
+The tunes come from the <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
+Collection</a>; they remain the property of their authors and are not included in the client.</p>
+</section>"""
+
+# Textes de l'interface par langue (HTML de confiance : jamais de texte de visiteur ici)
+TEXTS = {
+    "en": {
+        "lab_text": "TEXT:", "lab_next": "NEXT CHANGE:", "lab_reset": "BACK TO DEFAULT:", "lab_new": "NEW TEXT:",
+        "lab_chars": "CHARACTERS:", "lab_spec": "SPECIALS:", "spec_more": "+ DIGITS 0-9 AND SPACE",
+        "btn": "SEND", "now": "NOW", "src_visitor": "VISITOR", "src_default": "DEFAULT",
+        "help": "Upper case, {allowed}; {max} characters at most. One change every 3 minutes for everyone; with no "
+                "new text for 1 hour, the default message comes back. The text shows up on the C64 with the next "
+                "tune, not right away.",
+        "about": ABOUT_EN,
+    },
+    "fr": {
+        "lab_text": "TEXTE:", "lab_next": "PROCHAIN CHANGEMENT:", "lab_reset": "RETOUR AU DEFAUT:", "lab_new": "NOUVEAU TEXTE:",
+        "lab_chars": "CARACTERES:", "lab_spec": "SPECIAUX:", "spec_more": "+ CHIFFRES 0-9 ET ESPACE",
+        "btn": "ENVOYER", "now": "MAINTENANT", "src_visitor": "VISITEUR", "src_default": "PAR DEFAUT",
+        "help": "Majuscules, {allowed} ; {max} caracteres au plus. Une modification toutes les 3 minutes pour tout le "
+                "monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le "
+                "C64 au morceau suivant, pas tout de suite.",
+        "about": ABOUT_FR,
+    },
+}
+ALLOWED = {"en": "A-Z, 0-9, " + SPECIALS + " and space", "fr": "A-Z, 0-9, " + SPECIALS + " et espace"}
+MSG = {
+    "en": {
+        "expired": "Form expired or sent too fast: try again.",
+        "badchars": "Characters not allowed: %s. Allowed: %s.",
+        "short": "Text too short (at least %d characters).",
+        "long": "Text too long: %d characters, %d at most.",
+        "banned": "This text contains a forbidden word.",
+        "early": "Too early: %s left before the next change.",
+        "ip_early": "You already changed the text: %s left before you can do it again.",
+        "saved": "Saved. The text will show up with the next tune.",
+    },
+    "fr": {
+        "expired": "Formulaire périmé ou envoyé trop vite : réessaie.",
+        "badchars": "Caractères non autorisés : %s. Autorisés : %s.",
+        "short": "Texte trop court (%d caractères au moins).",
+        "long": "Texte trop long : %d caractères, %d au plus.",
+        "banned": "Ce texte contient un mot interdit.",
+        "early": "Trop tôt : encore %s avant le prochain changement.",
+        "ip_early": "Tu as déjà changé le texte : encore %s avant de pouvoir recommencer.",
+        "saved": "C'est enregistré. Le texte apparaîtra au prochain morceau.",
+    },
+}
+
+
+def pick_lang(wanted: str | None, accept: str | None) -> str:
+    """?lang=en|fr si demandé ; sinon la première langue du navigateur : français si c'est « fr », anglais sinon."""
+    if wanted in ("en", "fr"):
+        return wanted
+    first = (accept or "").split(",")[0].strip().lower()
+    return "fr" if first.startswith("fr") else "en"
 
 
 def rainbow(text: str, shift: int = 0) -> str:
@@ -284,7 +370,8 @@ def rainbow(text: str, shift: int = 0) -> str:
     return "".join(out)
 
 
-def render(st: State, ip: str, message: str = "", ok: bool = False, value: str = "") -> bytes:
+def render(st: State, ip: str, lang: str, message: str = "", ok: bool = False, value: str = "") -> bytes:
+    T = TEXTS[lang]
     cur, from_user = st.current()
     last = st.last_change()
     wait_s = max(0.0, st.a.cooldown - (time.time() - last)) if last else 0.0
@@ -293,14 +380,18 @@ def render(st: State, ip: str, message: str = "", ok: bool = False, value: str =
     msg = '<div class="msg %s" role="status">%s</div>' % ("ok" if ok else "err", html.escape(message)) if message else ""
     vals = {
         "title": rainbow("JUKEBOX SID"),
-        "source": "VISITEUR" if from_user else "PAR DEFAUT",
-        "next": fmt(wait_s) if wait_s else "MAINTENANT",
+        "lang": lang, "on_en": ' class="on" aria-current="true"' if lang == "en" else "", "on_fr": ' class="on" aria-current="true"' if lang == "fr" else "",
+        "source": T["src_visitor"] if from_user else T["src_default"],
+        "next": fmt(wait_s) if wait_s else T["now"], "now": T["now"],
         "wait": "%.1f" % wait_s,
         "reset": fmt(left) if left > 0 else "-",
         "current": rainbow(cur or " ", 3),
         "current_plain": html.escape(cur, quote=True),
         "dur": str(max(12, int(len(cur) * 0.28))),
-        "message": msg, "max": str(SCROLL_MAX), "specials": html.escape(SPECIALS), "allowed": html.escape(ALLOWED_TXT),
+        "message": msg, "max": str(SCROLL_MAX), "specials": html.escape(SPECIALS),
+        "help": html.escape(T["help"].format(allowed=ALLOWED[lang], max=SCROLL_MAX)),
+        "lab_text": T["lab_text"], "lab_next": T["lab_next"], "lab_reset": T["lab_reset"], "lab_new": T["lab_new"],
+        "lab_chars": T["lab_chars"], "lab_spec": T["lab_spec"], "spec_more": T["spec_more"], "btn": T["btn"], "about": T["about"],
         "value": html.escape(value), "token": st.token(),
         "disabled": "disabled" if wait_s else "",
     }
@@ -351,6 +442,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Vary", "Accept-Language")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -362,10 +454,10 @@ class Handler(BaseHTTPRequestHandler):
     def gate(self) -> bool:
         ip = self.ip()
         if self.st.banned_ip(ip):
-            self.reply(403, b"interdit", "text/plain; charset=utf-8")
+            self.reply(403, b"forbidden", "text/plain; charset=utf-8")
             return False
         if not self.st.rate_ok(ip):
-            self.reply(429, b"trop de requetes", "text/plain; charset=utf-8")
+            self.reply(429, b"too many requests", "text/plain; charset=utf-8")
             return False
         return True
 
@@ -373,45 +465,47 @@ class Handler(BaseHTTPRequestHandler):
         if not self.gate():
             return
         if self.path.split("?")[0] != "/":
-            return self.reply(404, b"introuvable", "text/plain; charset=utf-8")
-        self.reply(200, render(self.st, self.ip()))
+            return self.reply(404, b"not found", "text/plain; charset=utf-8")
+        q = parse_qs(urlsplit(self.path).query).get("lang", [""])[0]
+        self.reply(200, render(self.st, self.ip(), pick_lang(q, self.headers.get("Accept-Language"))))
 
     def do_POST(self):
         if not self.gate():
             return
         if self.path != "/":
-            return self.reply(404, b"introuvable", "text/plain; charset=utf-8")
+            return self.reply(404, b"not found", "text/plain; charset=utf-8")
         try:
             n = int(self.headers.get("Content-Length", ""))
         except ValueError:
-            return self.reply(411, b"longueur requise", "text/plain; charset=utf-8")
+            return self.reply(411, b"length required", "text/plain; charset=utf-8")
         if not 0 <= n <= MAX_BODY:
-            return self.reply(413, b"trop gros", "text/plain; charset=utf-8")
+            return self.reply(413, b"too big", "text/plain; charset=utf-8")
         form = parse_qs(self.rfile.read(n).decode("utf-8", "replace"), keep_blank_values=True)
         get = lambda k: (form.get(k) or [""])[0]
         st, ip = self.st, self.ip()
+        lang = pick_lang(get("lang"), self.headers.get("Accept-Language"))
+        m = MSG[lang]
         if get("site") or not st.token_ok(get("k")):
             log.info("%s refusé (robot ou formulaire trop rapide/périmé)", ip)
-            return self.reply(200, render(st, ip, "Formulaire périmé ou envoyé trop vite : réessaie."))
-        txt, err = check_text(st, get("t"))
+            return self.reply(200, render(st, ip, lang, m["expired"]))
+        txt, err = check_text(st, get("t"), lang)
         if txt is None:
-            return self.reply(200, render(st, ip, err, value=get("t")[:SCROLL_MAX * 2]))
+            return self.reply(200, render(st, ip, lang, err, value=get("t")[:SCROLL_MAX * 2]))
         with st.lock:                       # la pause est vérifiée et armée sous le même verrou
             last = st.last_change()
             wait = st.a.cooldown - (time.time() - last) if last else 0
             if wait > 0:
-                return self.reply(200, render(st, ip, "Trop tôt : encore %s avant le prochain changement." % fmt(wait),
+                return self.reply(200, render(st, ip, lang, m["early"] % fmt(wait),
                                               value=txt))
             wait = st.ip_wait(ip)
             if wait > 0:
-                return self.reply(200, render(st, ip, "Tu as déjà changé le texte : encore %s avant de pouvoir "
-                                              "recommencer." % fmt(wait), value=txt))
+                return self.reply(200, render(st, ip, lang, m["ip_early"] % fmt(wait), value=txt))
             write_atomic(st.a.user_file, txt)
             st.mark(ip)
         with open(st.a.history, "a", encoding="utf-8") as f:
             f.write(json.dumps({"t": time.strftime("%Y-%m-%d %H:%M:%S"), "ip": ip, "text": txt}) + "\n")
         log.info("%s nouveau texte : %s", ip, txt)
-        self.reply(200, render(st, ip, "C'est enregistré. Le texte apparaîtra au prochain morceau.", ok=True))
+        self.reply(200, render(st, ip, lang, m["saved"], ok=True))
 
 
 def main():
