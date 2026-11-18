@@ -9,6 +9,9 @@ tune's own code, just like back in the day). No synchronisation between clients:
 The play screen: giant logo, title / artist / year, elapsed time, three VU meters (one per SID voice) in a
 rainbow gradient, a demo-style scroller whose text comes from the server, and the key legend.
 
+![Play screen (VICE emulation)](docs/screenshot.png)
+*The play screen, captured in the VICE emulator (demo build): rainbow VU meters, server-driven scroller.*
+
 ```
  ┌────────────┐   text, TCP :6474     ┌──────────────────────┐
  │  server    │ ◄───────────────────► │  C64 Ultimate        │

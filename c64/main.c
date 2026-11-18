@@ -32,6 +32,7 @@ extern unsigned char demo_data[];
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
+static char d_scroll[] = "          JUKEBOX SID  ***  A SID RADIO FOR THE COMMODORE ULTIMATE  ***  CODED BY STEPHAN  ***  TUNES FROM THE HVSC  ***  HELLO CLAUDE, THANKS FOR THE HELP !          ";
 #endif
 
 static unsigned char chunk[128];
@@ -179,6 +180,7 @@ static unsigned char recuperer(void)
     t_title = d_title;
     t_author = d_author;
     t_released = d_released;
+    charger_scroll(d_scroll);
     return 1;
 #endif
     s = net_ouvrir(SERVEUR_IP, SERVEUR_PORT);
