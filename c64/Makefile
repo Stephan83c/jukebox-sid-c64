@@ -13,10 +13,10 @@ CFLAGS := -t c64 -O -C jukebox.cfg -Wl -D,__HISTART__=$(HISTART) \
 .DEFAULT_GOAL := all
 
 # Version de démonstration : un morceau intégré, sans réseau (pour VICE) ; voir make_demo.py
-demo: main.c uci.c play.s boot.s logo.s scroll.s demo.s demo.h jukebox.cfg
+demo: main.c uci.c play.s boot.s logo.s scroll.s stack.s demo.s demo.h jukebox.cfg
 	@mkdir -p build
 	cl65 -t c64 -O -C jukebox.cfg -Wl -D,__HISTART__=0x9800,-D,__LOADSIZE__=0x3800 -DDEMO -DVIS_DEFAULT=$(VIS) -DMAX_SECS=$(MAX_SECS) \
-	  -DSERVEUR_IP='"$(SERVEUR_IP)"' -m build/demo.map -o build/demo.prg main.c uci.c play.s boot.s logo.s scroll.s demo.s
+	  -DSERVEUR_IP='"$(SERVEUR_IP)"' -m build/demo.map -o build/demo.prg main.c uci.c play.s boot.s logo.s scroll.s stack.s demo.s
 	@rm -f *.o; ls -l build/demo.prg
 all: $(PRG)
 
@@ -24,9 +24,9 @@ build/options: FORCE
 	@mkdir -p build; echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS)' | cmp -s - $@ || echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS)' > $@
 FORCE:
 
-$(PRG): build/options main.c uci.c uci.h ascii.h play.s boot.s logo.s scroll.s jukebox.cfg Makefile
+$(PRG): build/options main.c uci.c uci.h ascii.h play.s boot.s logo.s scroll.s stack.s jukebox.cfg Makefile
 	@mkdir -p build
-	cl65 $(CFLAGS) -m build/jukebox.map -o $@ main.c uci.c play.s boot.s logo.s scroll.s
+	cl65 $(CFLAGS) -m build/jukebox.map -o $@ main.c uci.c play.s boot.s logo.s scroll.s stack.s
 	@rm -f *.o
 	@ls -l $@
 

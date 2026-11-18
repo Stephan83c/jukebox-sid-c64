@@ -74,6 +74,13 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
   une adresse relue sous la ROM, des instructions modifiées en cours de route) ; sans lui, on aurait tâtonné.
 - Un morceau de démo qui plante n'est pas forcément la faute du lecteur : *Thrust* (HVSC) a un en-tête
   qui ne correspond pas à son code.
+- **La pile C de cc65 était dans la zone des morceaux.** Le démarrage de cc65 place le sommet de la pile à
+  `__MAIN_START__ + __MAIN_SIZE__` ; avec notre configuration (zone `MAIN` de 64 octets pour le lanceur BASIC) cela
+  donnait `$084D` : chaque appel de fonction écrasait `$082D-$0847`, donc le début des 156 morceaux chargés à `$0800`.
+  Ceux dont le code d'initialisation tombait là (*Alright*, *Dark Ages*) plantaient le lecteur ; les autres ne s'en
+  apercevaient pas. Trouvé le 2026-11-18 avec le moniteur de VICE (point d'arrêt sur écriture, puis lecture de
+  `sp` en `$02-$03`). Corrigé par `c64/stack.s` : un constructeur replace la pile à `__HIMEM__` ($D000).
+  Le soupçon « le SID est mauvais » était faux : la comparaison avec d'autres morceaux au même format l'a montré.
 - Des instructions du type `sta $0000,x` dont on modifie l'adresse doivent être forcées en absolu
   (`a:$0000,x`), sinon l'assembleur les code sur 2 octets.
 
