@@ -61,6 +61,16 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 
 ## À faire / idées
 
+- **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`
+  sont fixés dans le `Makefile` au moment de la compilation. Piste : champ modifiable au clavier sur
+  l'écran de connexion, comme dans *Belote LAN C64* (touche F3).
+- **Mise en place du serveur** : le faire tourner durablement ailleurs que sur le PC de développement
+  (service `systemd`, redémarrage automatique, journal), ouvrir le port dans le pare-feu, IP publique ou
+  nom de domaine, installer la HVSC et générer `jukebox.db`. À faire avant de parler de serveur public
+  (droits des morceaux, voir README).
+- **Push sur GitHub** : créer le dépôt, ajouter le remote, pousser `main` et le tag `v1.0`. Vérifier avant
+  qu'il ne contient ni morceau de la HVSC ni ROM du C64 (c'est le cas via `.gitignore`), et choisir une
+  licence pour le code.
 - Tester les touches ESPACE / Q / S / C / V sur le matériel (seules les commandes de lecture ont été
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.
