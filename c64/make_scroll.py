@@ -3,7 +3,7 @@
 
 Les formes viennent de la vraie police du C64 (chargen_set1.bin, extraite de VICE) étirée en hauteur
 (8 lignes -> 12). Le texte est ici : un octet par colonne de 8 pixels (0 = espace, n = n-ième lettre
-distincte, $FF = fin). Codes de caractères utilisés : 64 + 2 * (n - 1) (haut) et +1 (bas).
+distincte, $FF = fin). Codes de caractères utilisés : 64 + 2 * (n - 1) (haut) et +1 (bas) pour n <= 32, 168 + 2 * (n - 33) au-delà.
 """
 TEXT = "          JUKEBOX SID  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "   # texte de secours (le vrai vient du serveur : scroll.txt)
 rom = open("chargen_set1.bin", "rb").read()
@@ -13,8 +13,9 @@ def screen_code(ch):
         return ord(ch) - 64
     return ord(ch)            # chiffres, ponctuation : même code que l'ASCII
 
-# Alphabet FIXE (32 glyphes) : le texte reçu du serveur est traduit avec la même table (voir main.c).
-order = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?-")
+# Alphabet FIXE (45 glyphes) : le texte reçu du serveur est traduit avec la même table (voir main.c).
+# Les 32 premiers vont aux codes $40-$7F, les suivants (/ ' : et les chiffres) aux codes $A8-$C1 (play.s).
+order = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?-/':0123456789")
 assert set(TEXT) - {" "} <= set(order), set(TEXT) - set(order)
 glyphs = bytearray()
 for ch in order:
@@ -23,7 +24,6 @@ for ch in order:
     for y in range(12):                      # 8 lignes étirées en 12, centrées dans 16
         rows[2 + y] = g[y * 8 // 12]
     glyphs += bytes(rows[:8]) + bytes(rows[8:])       # case du haut, puis case du bas
-glyphs += bytes(512 - len(glyphs))           # complété à 512 octets (32 lettres)
 stream = [0 if ch == " " else order.index(ch) + 1 for ch in TEXT] + [0xFF]
 
 def dump(name, data, per=16):

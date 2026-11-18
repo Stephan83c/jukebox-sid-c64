@@ -40,7 +40,9 @@ TOKEN_MAX_AGE = 3600
 RATE_WINDOW, RATE_MAX = 60, 30      # requêtes par IP et par minute
 MAX_THREADS = 64                    # connexions traitées en même temps ; au-delà, refus immédiat
 
-ALLOWED_TXT = "A-Z * . , ! ? - et espace"
+SPECIALS = ". , ! ? * - / ' :"
+ALLOWED_TXT = "A-Z, 0-9, " + SPECIALS + " et espace"
+APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u00b4": "'", "`": "'", "\u02bc": "'"})   # apostrophes des claviers de téléphone
 
 
 class State:
@@ -118,7 +120,7 @@ class State:
 
 
 def normalize(raw: str) -> str:
-    raw = unicodedata.normalize("NFKD", raw).upper()
+    raw = unicodedata.normalize("NFKD", raw.translate(APOSTROPHES)).upper()
     raw = "".join(c for c in raw if not unicodedata.combining(c))     # é -> E
     return " ".join(raw.split())
 
@@ -208,12 +210,13 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 <div class="row"><label class="lab" for="t">NOUVEAU TEXTE:</label></div>
 <textarea id="t" name="t" rows="3" maxlength="@@max@@" autocomplete="off" required>@@value@@</textarea>
 <div class="row"><span class="lab">CARACTERES:</span> <span class="cnt"><span id="n">0</span> / @@max@@</span></div>
+<div class="row"><span class="lab">SPECIAUX:</span> <span class="val">@@specials@@</span> <span class="lab">+ CHIFFRES 0-9 ET ESPACE</span></div>
 <input type="hidden" name="k" value="@@token@@">
 <input class="hp" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div class="sp"></div>
 <button id="b" @@disabled@@>ENVOYER</button>
 </form>
-<p class="help">Majuscules, @@allowed@@, @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
+<p class="help">Majuscules, @@allowed@@ ; @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
 tout le monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le C64
 au morceau suivant, pas tout de suite.</p>
 <div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
@@ -259,7 +262,7 @@ def render(st: State, ip: str, message: str = "", ok: bool = False, value: str =
         "current": rainbow(cur or " ", 3),
         "current_plain": html.escape(cur, quote=True),
         "dur": str(max(12, int(len(cur) * 0.28))),
-        "message": msg, "max": str(SCROLL_MAX), "allowed": html.escape(ALLOWED_TXT),
+        "message": msg, "max": str(SCROLL_MAX), "specials": html.escape(SPECIALS), "allowed": html.escape(ALLOWED_TXT),
         "value": html.escape(value), "token": st.token(),
         "disabled": "disabled" if wait_s else "",
     }

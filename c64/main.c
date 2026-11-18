@@ -18,7 +18,7 @@
 #define MAX_SECS 1000   /* durée maximale d'un morceau (secondes) */
 #endif
 #define MEM_BAS  0x0800u   /* le morceau doit tenir entre ces deux adresses */
-#define MEM_HAUT 0xA8FFu   /* le client occupe $A900-$CFFF (voir Makefile : HISTART) */
+#define MEM_HAUT 0xA6FFu   /* le client occupe $A700-$CFFF (voir Makefile : HISTART) */
 
 extern unsigned init_addr, play_addr, frames_max;
 extern unsigned char fps, vis_on;
@@ -101,7 +101,7 @@ static unsigned nombre(const char *s)
 }
 
 /* Texte du scroller reçu (ASCII, dans l'en-tête) : converti SUR PLACE en indices de glyphes
-   (make_scroll.py) : A-Z = 1-26, * . , ! ? - = 27-32, le reste = espace (0) ; $FF à la fin.
+   (make_scroll.py) : A-Z = 1-26, * . , ! ? - = 27-32, / ' : = 33-35, 0-9 = 36-45, le reste = espace (0) ; $FF à la fin.
    Le serveur fournit déjà les 10 espaces avant et après. */
 static void charger_scroll(char *s)
 {
@@ -122,7 +122,10 @@ static void charger_scroll(char *s)
             case 33: i = 30; break;   /* ! */
             case 63: i = 31; break;   /* ? */
             case 45: i = 32; break;   /* - */
-            default: i = 0;
+            case 47: i = 33; break;   /* / */
+            case 39: i = 34; break;   /* ' */
+            case 58: i = 35; break;   /* : */
+            default: i = (c >= 48 && c <= 57) ? c - 12 : 0;   /* 0-9 */
             }
         }
         s[n++] = i;

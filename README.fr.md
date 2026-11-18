@@ -31,7 +31,7 @@ avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests 
 
 ```sh
 # 1. la HVSC (à télécharger sur https://hvsc.c64.org/) puis l'index des morceaux jouables
-python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA8FF
+python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA6FF
 
 # 2. le serveur (port 6474)
 python3 server.py --root /chemin/vers/C64Music
@@ -64,7 +64,7 @@ Le texte vient du fichier **`scroll.txt`** à côté de `server.py` (option `--s
 requête : on le modifie sans redémarrer, et le nouveau texte arrive **au morceau suivant** (le C64 ne
 contacte pas le serveur pendant la lecture).
 
-- Alphabet : `A-Z * . , ! ? -` (32 glyphes) ; minuscules mises en majuscules, accents retirés, le reste
+- Alphabet : `A-Z 0-9 * . , ! ? - / ' :` (45 glyphes) ; minuscules mises en majuscules, accents retirés, le reste
   devient un espace. Pas de chiffres.
 - 150 caractères au plus ; le serveur ajoute 10 espaces avant et après.
 - Fichier absent ou vide : le C64 affiche son court texte intégré.
@@ -135,7 +135,7 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
 | `c64/main.c`, `uci.c` | client : réseau (UCI), interface, recherche |
 | `c64/play.s` | lecteur PSID, vu-mètres, scroller, logo |
 | `c64/boot.s`, `jukebox.cfg` | lanceur BASIC et carte mémoire (le programme est recopié en haut) |
-| `c64/make_logo.py`, `make_scroll.py` | génèrent `logo.s` et `scroll.s` (données commitées ; alphabet fixe de 32 glyphes) |
+| `c64/make_logo.py`, `make_scroll.py` | génèrent `logo.s` et `scroll.s` (données commitées ; alphabet fixe de 45 glyphes) |
 | `c64/dump_chargen.py` | extrait la ROM des caractères de VICE pour `make_scroll.py` |
 | `c64/make_demo.py` | version démo sans réseau (`make demo`), pour tester dans VICE |
 

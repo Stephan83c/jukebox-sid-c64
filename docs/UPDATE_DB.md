@@ -28,7 +28,7 @@ archive: the indexer uses it for tune lengths.
 
 ```sh
 cp jukebox.db jukebox.db.bak                      # safety net
-python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA8FF
+python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA6FF
 ```
 
 `--max-addr` must stay equal to `HISTART - 1` (`c64/Makefile`) and to `MEM_HAUT` (`c64/main.c`): above it is

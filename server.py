@@ -47,12 +47,12 @@ def clean(s: str) -> str:
     return " ".join((s or "").replace("|", "/").split())
 
 
-SCROLL_ALPHABET = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?- ")
+SCROLL_ALPHABET = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789*.,!?-/': ")
 SCROLL_MAX = 150
 
 
 def scroll_text(path: Path) -> str:
-    """Texte du scroller : relu à chaque morceau, réduit à l'alphabet du C64 (A-Z * . , ! ? -),
+    """Texte du scroller : relu à chaque morceau, réduit à l'alphabet du C64 (A-Z 0-9 * . , ! ? - / ' :),
     sur une seule ligne, 150 caractères au plus, avec 10 espaces avant et après (le texte entre par la droite). Fichier absent ou vide : le C64 garde son texte."""
     try:
         raw = path.read_text(encoding="utf-8", errors="replace")

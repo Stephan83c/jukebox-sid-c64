@@ -63,6 +63,7 @@ Plus le client est gros, plus il monte dans la mémoire et moins il reste de pla
 | `$AF00` | 44 811 | logo et jeu de caractères |
 | `$AC00` | 44 671 | scroller 8 pixels |
 | `$A900` | 44 555 | scroller 12 pixels |
+| `$A700` | 44 503 | 13 glyphes de plus au scroller (`/` `'` `:` `0-9`) |
 
 Motifs de rejet (version actuelle) : plage mémoire incompatible, morceaux cadencés par un timer CIA,
 RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
@@ -84,7 +85,7 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 - Code sous licence MIT (ajoutée après la v1.1, ne couvre pas les morceaux de la HVSC) ; dépôt GitHub privé : `Stephan83c/jukebox-sid-c64`.
 - Le texte du scroller ne change qu'au morceau suivant ; un rafraîchissement en cours de lecture
   demanderait un accès réseau pendant le morceau (risque pour la synchronisation).
-- Chiffres dans le scroller (alphabet limité à 32 glyphes : il faudrait libérer de la mémoire).
+- Plus de glyphes au scroller : alphabet de 45 glyphes (A-Z, `* . , ! ? - / ' :`, 0-9). Il reste 18 codes libres (`$C2-$DF`, 15 glyphes possibles), 16 octets par glyphe, 236 octets de marge.
 - Tester les touches ESPACE / Q / S / C / V sur le matériel (seules les commandes de lecture ont été
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.

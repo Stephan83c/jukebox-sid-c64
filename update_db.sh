@@ -8,14 +8,14 @@
 #   --yes         ne pose pas de question
 # Réglages (variables d'environnement) :
 #   SERVER=compte@serveur  SSH_PORT=22  REMOTE_DIR=jukebox  PORT=6474
-#   MAX_ADDR=0xA8FF (= HISTART-1, voir docs)  SERVICE=jukebox  DB=./jukebox.db  MIN_RATIO=90 (% de l'ancienne base)
+#   MAX_ADDR=0xA6FF (= HISTART-1, voir docs)  SERVICE=jukebox  DB=./jukebox.db  MIN_RATIO=90 (% de l'ancienne base)
 set -euo pipefail
 
 SERVER=${SERVER:-compte@serveur}
 SSH_PORT=${SSH_PORT:-22}
 REMOTE_DIR=${REMOTE_DIR:-jukebox}
 PORT=${PORT:-6474}
-MAX_ADDR=${MAX_ADDR:-0xA8FF}
+MAX_ADDR=${MAX_ADDR:-0xA6FF}
 SERVICE=${SERVICE:-jukebox}
 HERE=$(cd "$(dirname "$0")" && pwd)
 DB=${DB:-$HERE/jukebox.db}

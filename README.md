@@ -31,7 +31,7 @@ the REST API and the *Command Interface* enabled. VICE is optional (hardware-fre
 
 ```sh
 # 1. the HVSC (download from https://hvsc.c64.org/), then index the playable tunes
-python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA8FF
+python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA6FF
 
 # 2. the server (port 6474)
 python3 server.py --root /path/to/C64Music
@@ -64,7 +64,7 @@ The text comes from the file **`scroll.txt`** next to `server.py` (option `--scr
 request: edit it without restarting, and the new text shows up **with the next tune** (the C64 does not talk to
 the server while playing).
 
-- Alphabet: `A-Z * . , ! ? -` (32 glyphs); lower case is upper-cased, accents are stripped, anything else
+- Alphabet: `A-Z 0-9 * . , ! ? - / ' :` (45 glyphs); lower case is upper-cased, accents are stripped, anything else
   becomes a space. No digits.
 - At most 150 characters; the server adds 10 spaces before and after.
 - Missing or empty file: the C64 shows its short built-in text.
@@ -134,7 +134,7 @@ title, case-insensitively.
 | `c64/main.c`, `uci.c` | client: network (UCI), interface, search |
 | `c64/play.s` | PSID player, VU meters, scroller, logo |
 | `c64/boot.s`, `jukebox.cfg` | BASIC launcher and memory map (the program is copied to the top of memory) |
-| `c64/make_logo.py`, `make_scroll.py` | generate `logo.s` and `scroll.s` (committed data; fixed 32-glyph alphabet) |
+| `c64/make_logo.py`, `make_scroll.py` | generate `logo.s` and `scroll.s` (committed data; fixed 45-glyph alphabet) |
 | `c64/dump_chargen.py` | extracts the character ROM from VICE for `make_scroll.py` |
 | `c64/make_demo.py` | network-less demo build (`make demo`), for testing in VICE |
 

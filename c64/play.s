@@ -340,7 +340,7 @@ put:    sta     addr,x
 
 ; Colonne suivante du scroller : A = case du haut, nbot = case du bas. Le texte est un flux d'indices
 ; (0 = espace, n = n-ième lettre, $FF = fin, on recommence) ; la lettre n occupe les codes
-; 64 + 2 * (n - 1) (haut) et le suivant (bas). N'utilise ni X ni Y.
+; 64 + 2 * (n - 1) (haut) et le suivant (bas), ou 168 + 2 * (n - 33) à partir de la 33e. N'utilise ni X ni Y.
 ; Début du texte : celui du serveur s'il y en a un, sinon le texte intégré. N'utilise que A.
 scr_rewind:
         lda     _scr_ok
@@ -374,10 +374,16 @@ next_char:
         lda     #32
         sta     nbot
         rts
-@gl:    asl
+@gl:    cmp     #33
+        bcs     @hi
+        asl
         clc
-        adc     #62
-        sta     nbot
+        adc     #62             ; lettres 1-32 : codes 64 + 2 * (n - 1)
+        jmp     @st
+@hi:    asl
+        clc
+        adc     #102            ; lettres 33 et suivantes : codes 168 + 2 * (n - 33) ($A8...)
+@st:    sta     nbot
         inc     nbot
         rts
 
@@ -492,6 +498,12 @@ vis_start:
         sta     CHR2 + $40 * 8 + 256,x
         inx
         bne     @sg
+        ldx     #0              ; 13 lettres de plus (/ ' : 0-9) : codes $A8-$C1 (208 octets)
+@sh:    lda     scr_glyphs + 512,x
+        sta     CHR2 + $A8 * 8,x
+        inx
+        cpx     #208
+        bne     @sh
         ldx     #0              ; logo : formes des 10 lettres (codes $80-$A7)
 @lg:    lda     logo_glyphs,x
         sta     CHR2 + $80 * 8,x

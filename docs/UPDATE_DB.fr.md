@@ -30,12 +30,12 @@ de l'archive : l'indexeur s'en sert pour les durées.
 
 ```sh
 cp jukebox.db jukebox.db.bak                      # filet de sécurité
-python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA8FF
+python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA6FF
 ```
 
 `--max-addr` doit rester égal à `HISTART - 1` (`c64/Makefile`) et à `MEM_HAUT` (`c64/main.c`) : au-dessus,
 c'est la mémoire du client C64. Le script affiche le nombre de morceaux retenus et les raisons de rejet
-(RSID, trop gros, multi-SID, cadencé par un timer CIA…). Avec la HVSC #85 : environ 44 555 morceaux jouables.
+(RSID, trop gros, multi-SID, cadencé par un timer CIA…). Avec la HVSC #85 : environ 44 503 morceaux jouables.
 
 ## 3. Envoyer sur le serveur
 
