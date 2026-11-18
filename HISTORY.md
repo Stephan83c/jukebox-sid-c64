@@ -42,6 +42,16 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
 10. **Mise en page** : texte à gauche, blocs répartis sur les 25 lignes, ligne des touches sur les 40
    colonnes.
 
+11. **Serveur public** (v1.1) : le serveur tourne sur un VPS (`boombass.net:6474`), client réglé sur ce nom.
+   Pas de root sur la machine : processus détaché en attendant que l'administrateur active `linger` pour un
+   service `systemd --user`, comme le serveur de belote qui y tourne déjà. Le dépôt GitHub (privé) est
+   cloné sur le serveur avec une clé de déploiement en lecture seule.
+12. **Vu-mètres en arc-en-ciel** : dégradé fixe sur les 32 cases (rouge à violet, jamais de noir).
+13. **Texte du scroller fourni par le serveur** (`scroll.txt`, relu à chaque morceau, alphabet fixe de
+   32 glyphes, 150 caractères). Le client était plein (le premier essai dépassait de 680 octets) : texte de
+   secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
+   Marge restante : 7 octets.
+
 ## Le catalogue selon la place prise par le client
 
 Plus le client est gros, plus il monte dans la mémoire et moins il reste de place pour les morceaux.
@@ -69,17 +79,16 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 ## À faire / idées
 
 - **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`
-  sont fixés dans le `Makefile` au moment de la compilation. Piste : champ modifiable au clavier sur
-  l'écran de connexion, comme dans *Belote LAN C64* (touche F3).
-- **Mise en place du serveur** : le faire tourner durablement ailleurs que sur le PC de développement
-  (service `systemd`, redémarrage automatique, journal), ouvrir le port dans le pare-feu, IP publique ou
-  nom de domaine, installer la HVSC et générer `jukebox.db`. À faire avant de parler de serveur public
-  (droits des morceaux, voir README).
-- **Push sur GitHub** : créer le dépôt, ajouter le remote, pousser `main` et le tag `v1.0`. Vérifier avant
-  qu'il ne contient ni morceau de la HVSC ni ROM du C64 (c'est le cas via `.gitignore`), et choisir une
-  licence pour le code.
+  sont fixés dans le `Makefile` à la compilation (valeurs actuelles : `boombass.net`, `6474`). Piste : champ
+  modifiable au clavier, comme dans *Belote LAN C64* (touche F3).
+- **Service permanent** : activer `linger` (root) puis `systemctl --user enable --now jukebox` ; le serveur
+  tourne pour l'instant en processus détaché (ne survit pas à un redémarrage de la machine).
+- **Licence** pour le code (non choisie) ; dépôt GitHub privé : `Stephan83c/jukebox-sid-c64`.
+- Le texte du scroller ne change qu'au morceau suivant ; un rafraîchissement en cours de lecture
+  demanderait un accès réseau pendant le morceau (risque pour la synchronisation).
+- Chiffres dans le scroller (alphabet limité à 32 glyphes : il faudrait libérer de la mémoire).
 - Tester les touches ESPACE / Q / S / C / V sur le matériel (seules les commandes de lecture ont été
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.
 - Un chat (écarté pour l'instant : la page zéro et les sockets sont les deux obstacles).
-- Un serveur public : question des droits à régler d'abord.
+- Serveur public en ligne depuis la v1.1 : la question des droits des morceaux (HVSC) reste à régler.

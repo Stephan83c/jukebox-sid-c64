@@ -1,112 +1,142 @@
-# Jukebox SID pour C64 Ultimate
+# SID Jukebox for the C64 Ultimate
 
-Un jukebox en ligne façon *Belote LAN C64* : le **C64 Ultimate** demande un morceau SID au hasard à un
-serveur, le reçoit par le réseau de l'Ultimate (UCI/TCP) et le **joue lui-même** (le 6510 exécute le code
-du morceau, comme à l'époque). Pas de synchronisation entre les clients : chacun a son tirage.
+[🇫🇷 Français](README.fr.md) · 🇬🇧 English
 
-L'écran de lecture : logo géant, titre / artiste / année, temps écoulé, trois vu-mètres (un par voix du
-SID), scroller de démo, touches.
+An online jukebox in the spirit of *Belote LAN C64*: the **C64 Ultimate** asks a server for a random SID tune,
+receives it through the Ultimate's network interface (UCI/TCP) and **plays it itself** (the 6510 runs the
+tune's own code, just like back in the day). No synchronisation between clients: everybody gets their own draw.
+
+The play screen: giant logo, title / artist / year, elapsed time, three VU meters (one per SID voice) in a
+rainbow gradient, a demo-style scroller whose text comes from the server, and the key legend.
 
 ```
- ┌────────────┐   texte, TCP :6474    ┌──────────────────────┐
- │  serveur   │ ◄───────────────────► │  C64 Ultimate        │
- │ server.py  │   RANDOM [motif]      │  c64/ (cc65 + 6502)  │
- │ jukebox.db │ ──► OK|…|code brut    │  UCI : sockets TCP   │
+ ┌────────────┐   text, TCP :6474     ┌──────────────────────┐
+ │  server    │ ◄───────────────────► │  C64 Ultimate        │
+ │ server.py  │   RANDOM [pattern]    │  c64/ (cc65 + 6502)  │
+ │ jukebox.db │ ──► OK|…|raw code     │  UCI: TCP sockets    │
  └─────┬──────┘                       └──────────────────────┘
        │ indexer.py
  ┌─────┴──────┐
- │ HVSC (SID) │   ~61 000 fichiers, durées : Songlengths.md5
+ │ HVSC (SID) │   ~61,000 files, lengths: Songlengths.md5
  └────────────┘
 ```
 
-## Démarrage rapide
+## Quick start
 
-Prérequis : Python 3 (+ Pillow seulement pour regénérer le logo), `7z`, **cc65** (`cl65`), un C64 Ultimate
-avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests sans matériel).
+Requirements: Python 3 (+ Pillow only to regenerate the logo), `7z`, **cc65** (`cl65`), a C64 Ultimate with
+the REST API and the *Command Interface* enabled. VICE is optional (hardware-free tests).
 
 ```sh
-# 1. la HVSC (à télécharger sur https://hvsc.c64.org/) puis l'index des morceaux jouables
-python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA8FF
+# 1. the HVSC (download from https://hvsc.c64.org/), then index the playable tunes
+python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA8FF
 
-# 2. le serveur (port 6474)
-python3 server.py --root /chemin/vers/C64Music
+# 2. the server (port 6474)
+python3 server.py --root /path/to/C64Music
 
-# 3. le client C64 : adapter SERVEUR_IP et ULTIMATE dans c64/Makefile (ou en ligne de commande)
+# 3. the C64 client: set SERVEUR_IP, SERVEUR_PORT and ULTIMATE in c64/Makefile (or on the command line)
 cd c64
-make SERVEUR_IP=boombass.net ULTIMATE=192.168.1.27 deploy
+make SERVEUR_IP=boombass.net SERVEUR_PORT=6474 ULTIMATE=192.168.1.27 deploy
 ```
 
-`--max-addr` doit rester égal à `HISTART - 1` du Makefile (et à `MEM_HAUT` de `main.c`) : c'est la limite
-haute des morceaux, le client occupe la mémoire au-dessus.
+`--max-addr` must stay equal to `HISTART - 1` in the Makefile (and to `MEM_HAUT` in `main.c`): it is the upper
+limit for tunes, the client lives in the memory above it.
 
-## Touches
+## Running the server online
 
-| Touche | Effet |
+```sh
+python3 server.py --root /path/to/C64Music --port 6474      # listens on 0.0.0.0 by default
+```
+
+- Open the TCP port in the firewall (`firewall-cmd --add-port=6474/tcp --permanent`) and at your host.
+- Without root, a `systemd --user` service works (`~/.config/systemd/user/jukebox.service`,
+  `Restart=on-failure`); for it to survive logout and reboot, an administrator must run
+  `sudo loginctl enable-linger <account>`.
+- Updating from GitHub: `git pull` in the server folder (a read-only deploy key if the repo is private),
+  then restart the server.
+
+## Scroller text
+
+The text comes from the file **`scroll.txt`** next to `server.py` (option `--scroll`). It is re-read on every
+request: edit it without restarting, and the new text shows up **with the next tune** (the C64 does not talk to
+the server while playing).
+
+- Alphabet: `A-Z * . , ! ? -` (32 glyphs); lower case is upper-cased, accents are stripped, anything else
+  becomes a space. No digits.
+- At most 150 characters; the server adds 10 spaces before and after.
+- Missing or empty file: the C64 shows its short built-in text.
+
+## Keys
+
+| Key | Effect |
 |---|---|
-| `SPACE` | morceau suivant |
-| `S` | recherche par artiste ou titre (RETURN valide, RUN/STOP annule, RETURN seul = tout) |
-| `C` | efface le filtre |
-| `V` | vu-mètres on/off (pris en compte au morceau suivant) |
-| `Q` | quitte (retour au BASIC) |
+| `SPACE` | next tune |
+| `S` | search by artist or title (RETURN confirms, RUN/STOP cancels, empty RETURN = everything) |
+| `C` | clear the filter |
+| `V` | VU meters on/off (takes effect on the next tune) |
+| `Q` | quit (back to BASIC) |
 
-## Le protocole (texte, une commande par ligne)
+## The protocol (text, one command per line)
 
 ```
-RANDOM [motif]  ->  OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année\n
-                    + <taille> octets de code brut (sans en-tête PSID)
-GET <id>        ->  idem pour un morceau précis
-STATS           ->  STATS|compatibles|total
-erreur          ->  ERR|message
+RANDOM [pattern]  ->  OK|id|size|seconds|frames/s|subtune|load|init|play|title|author|year|scroller\n
+                      + <size> bytes of raw code (PSID header stripped)
+GET <id>          ->  same, for a specific tune
+STATS             ->  STATS|compatible|total
+error             ->  ERR|message
 ```
 
-Débogable avec `nc`. Le motif cherche dans l'artiste ou le titre, sans tenir compte de la casse.
+The last field is the scroller text (see above). Debuggable with `nc`. The pattern is searched in artist or
+title, case-insensitively.
 
-## Comment ça marche
+## How it works
 
-- **Tri (`indexer.py`)** : lit l'en-tête de chaque `.sid`, retrouve la durée par le MD5 du fichier dans
-  `Songlengths.md5`, et marque `compatible` les morceaux que le lecteur sait jouer : PSID (pas RSID), un
-  seul SID, cadencé par l'image (pas par un timer CIA), routine de lecture présente, tient entre
-  `$0800` et `HISTART-1`, 16 Ko au plus. Les rejets et leur raison restent en base.
-- **Lecteur (`c64/play.s`)** : une interruption raster par image appelle la routine du morceau. Pendant
-  la lecture la page zéro appartient au morceau (sauvegardée avant, restaurée après) et le clavier est lu
-  directement sur la matrice.
-- **Vu-mètres** : les registres du SID sont en écriture seule. Pendant l'appel du morceau, `$D000-$DFFF`
-  est mis en RAM ; les écritures vers le SID y tombent, on les copie dans un tampon puis vers la vraie
-  puce. À partir du tampon on simule l'enveloppe (ADSR) de chaque voix.
-- **Affichage** : écran de lecture en banque VIC 3 (`$F400`, caractères `$F800`, RAM sous le KERNAL),
-  avec un jeu de caractères fait pour l'occasion (traits fins des vu-mètres, logo, lettres du scroller).
-  Le scroller utilise le scroll matériel `$D016`, limité à ses deux lignes par deux interruptions raster.
-- **Carte mémoire** : `$0800-(HISTART-1)` morceau ; `HISTART-$CFFF` client ; `$F400-$FFFF` affichage.
+- **Sorting (`indexer.py`)**: reads each `.sid` header, finds the length through the file's MD5 in
+  `Songlengths.md5`, and flags as `compatible` the tunes our player can run: PSID (not RSID), a single SID,
+  frame-driven (not a CIA timer), play routine present, fits between `$0800` and `HISTART-1`, 16 KB at most.
+  Rejections and their reason stay in the database.
+- **Player (`c64/play.s`)**: one raster interrupt per frame calls the tune's routine. While playing, zero page
+  belongs to the tune (saved before, restored after) and the keyboard is read straight from the matrix.
+- **VU meters**: the SID registers are write-only. During the tune call, `$D000-$DFFF` is mapped to RAM; writes
+  aimed at the SID land there, get copied to a buffer, then to the real chip. Each voice's ADSR envelope is
+  simulated from that buffer.
+- **Display**: play screen in VIC bank 3 (`$F400`, characters at `$F800`, RAM under the KERNAL), with a custom
+  character set (thin VU bars, logo, scroller letters). The scroller uses hardware scrolling (`$D016`),
+  confined to its two lines by two raster interrupts.
+- **Memory map**: `$0800-(HISTART-1)` tune; `HISTART-$CFFF` client; `$F400-$FFFF` display.
+  The client is almost full (7 spare bytes in BSS at v1.1): every new feature costs memory, hence the very
+  short built-in scroller text and the in-place conversion of the server text in the header buffer.
 
-## Pièges de l'Ultimate (appris à la dure)
+## Ultimate pitfalls (learned the hard way)
 
-- **Ne jamais redéployer / réinitialiser le C64 avec un socket ouvert** : l'interface de commande de
-  l'Ultimate peut se bloquer jusqu'à une coupure de courant. Le client ne garde aucun socket ouvert
-  pendant la lecture ; pour redéployer, attendre la ligne « déconnexion » dans le journal du serveur.
-- Après une erreur de lecture réseau (-1), ne plus écrire ni fermer ce socket.
-- cc65 convertit les littéraux de chaîne et de caractère : utiliser des valeurs numériques pour `|`, `a`,
-  `z`, et `#pragma charmap(0x0A, 0x0A)` pour le saut de ligne.
-- La RAM sous le KERNAL ne peut pas être relue par le processeur (il voit la ROM) : tout ce qu'on doit
-  relire vit dans un tampon ordinaire.
-- Changer une couleur du VIC-II en pleine ligne laisse un pixel gris : si on le fait, que ce soit dans
-  la bordure.
+- **Never redeploy / reset the C64 with an open socket**: the Ultimate's command interface can hang until
+  power is cycled. The client keeps no socket open while playing; to redeploy, wait for the "déconnexion"
+  line in the server log.
+- After a network read error (-1), do not write to or close that socket any more.
+- cc65 converts string and character literals: use numeric values for `|`, `a`, `z`, and
+  `#pragma charmap(0x0A, 0x0A)` for the line feed.
+- RAM under the KERNAL cannot be read back by the CPU (it sees the ROM): anything you need to re-read lives
+  in an ordinary buffer.
+- Changing a VIC-II colour mid-line leaves a grey pixel: if you do it, do it in the border.
 
-## Fichiers
+## Files
 
 | | |
 |---|---|
-| `indexer.py` | indexe la HVSC dans `jukebox.db` (SQLite) |
-| `server.py` | serveur asyncio : tirage, recherche, envoi du code brut |
-| `client_pc.py` | client de test (PC) ; envoie aussi un SID à l'Ultimate par son API REST |
-| `c64/main.c`, `uci.c` | client : réseau (UCI), interface, recherche |
-| `c64/play.s` | lecteur PSID, vu-mètres, scroller, logo |
-| `c64/boot.s`, `jukebox.cfg` | lanceur BASIC et carte mémoire (le programme est recopié en haut) |
-| `c64/make_logo.py`, `make_scroll.py` | génèrent `logo.s` et `scroll.s` (données commitées) |
-| `c64/dump_chargen.py` | extrait la ROM des caractères de VICE pour `make_scroll.py` |
-| `c64/make_demo.py` | version démo sans réseau (`make demo`), pour tester dans VICE |
+| `indexer.py` | indexes the HVSC into `jukebox.db` (SQLite) |
+| `server.py` | asyncio server: draw, search, sends the raw code and the scroller text |
+| `scroll.txt` | scroller text, re-read on every tune |
+| `client_pc.py` | PC test client; can also push a SID to the Ultimate through its REST API |
+| `c64/main.c`, `uci.c` | client: network (UCI), interface, search |
+| `c64/play.s` | PSID player, VU meters, scroller, logo |
+| `c64/boot.s`, `jukebox.cfg` | BASIC launcher and memory map (the program is copied to the top of memory) |
+| `c64/make_logo.py`, `make_scroll.py` | generate `logo.s` and `scroll.s` (committed data; fixed 32-glyph alphabet) |
+| `c64/dump_chargen.py` | extracts the character ROM from VICE for `make_scroll.py` |
+| `c64/make_demo.py` | network-less demo build (`make demo`), for testing in VICE |
 
-## Droits d'auteur
+Project history (in French): [HISTORY.md](HISTORY.md).
 
-Les morceaux de la HVSC sont protégés ; leur usage hors écoute privée est soumis au droit d'auteur
-(voir `DOCUMENTS/Disclaimer.txt` de la HVSC). Ce dépôt ne contient aucun morceau ni la ROM du C64 ;
-héberger un serveur public est une question à régler avec l'équipe HVSC ou les compositeurs.
+## Copyright
+
+The HVSC tunes are copyrighted; any use beyond private listening is subject to copyright (see the HVSC's
+`DOCUMENTS/Disclaimer.txt`). This repository contains no tunes and no C64 ROM; running a public server is a
+question to settle with the HVSC team or the composers.
