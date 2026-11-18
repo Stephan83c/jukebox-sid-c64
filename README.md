@@ -124,6 +124,7 @@ title, case-insensitively.
 | | |
 |---|---|
 | `indexer.py` | indexes the HVSC into `jukebox.db` (SQLite) |
+| `update_db.sh` | re-index + upload + restart + test, with safeguards ([docs](docs/UPDATE_DB.md)) |
 | `server.py` | asyncio server: draw, search, sends the raw code and the scroller text |
 | `scroll.txt` | scroller text, re-read on every tune |
 | `client_pc.py` | PC test client; can also push a SID to the Ultimate through its REST API |

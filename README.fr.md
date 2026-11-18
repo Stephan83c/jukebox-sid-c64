@@ -125,6 +125,7 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
 | | |
 |---|---|
 | `indexer.py` | indexe la HVSC dans `jukebox.db` (SQLite) |
+| `update_db.sh` | réindexe + envoie + redémarre + teste, avec garde-fous ([doc](docs/UPDATE_DB.fr.md)) |
 | `server.py` | serveur asyncio : tirage, recherche, envoi du code brut et du texte du scroller |
 | `scroll.txt` | texte du scroller, relu à chaque morceau |
 | `client_pc.py` | client de test (PC) ; envoie aussi un SID à l'Ultimate par son API REST |

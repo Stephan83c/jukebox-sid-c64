@@ -6,6 +6,20 @@ La base se reconstruit en entier avec `indexer.py` à partir d'une HVSC plus ré
 l'ancien fichier de sortie). Les identifiants de morceaux changent à chaque fois ; sans importance, le C64
 demande toujours un morceau au hasard.
 
+## Raccourci : `update_db.sh`
+
+```sh
+./update_db.sh /chemin/vers/C64Music            # réindexe, envoie, redémarre, teste
+./update_db.sh /chemin/vers/C64Music --local-only   # réindexe seulement (rien n'est envoyé)
+```
+
+Il fait les étapes 2 à 4 ci-dessous, avec des garde-fous : la base est construite dans un fichier neuf et
+n'est adoptée que si elle garde au moins 90 % des morceaux de l'ancienne (sauvegarde `jukebox.db.bak`) ; il
+attend qu'aucun C64 ne soit connecté avant de redémarrer (`--force` pour passer outre) ; il demande
+confirmation avant l'envoi (`--yes` pour l'éviter) et teste le serveur à la fin. Réglages par variables
+d'environnement (`SERVER`, `SSH_PORT`, `REMOTE_DIR`, `PORT`, `MAX_ADDR`…), voir l'en-tête du script.
+Les étapes à la main restent valables.
+
 ## 1. Récupérer la nouvelle HVSC
 
 Version complète sur <https://hvsc.c64.org/> (la base actuelle vient de la #85). Remplacer tout le dossier

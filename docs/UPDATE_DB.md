@@ -5,6 +5,19 @@
 The database is rebuilt from scratch by `indexer.py` from a newer HVSC (the script deletes the old output
 file). Tune ids change every time; that does not matter, the C64 always asks for a random tune.
 
+## Shortcut: `update_db.sh`
+
+```sh
+./update_db.sh /path/to/C64Music                # re-index, upload, restart, test
+./update_db.sh /path/to/C64Music --local-only   # re-index only (nothing is uploaded)
+```
+
+It does steps 2 to 4 below, with safeguards: the database is built into a fresh file and only adopted if it
+keeps at least 90 % of the old one's tunes (backup `jukebox.db.bak`); it waits until no C64 is connected
+before restarting (`--force` to override); it asks for confirmation before uploading (`--yes` to skip) and
+tests the server at the end. Settings through environment variables (`SERVER`, `SSH_PORT`, `REMOTE_DIR`,
+`PORT`, `MAX_ADDR`…), see the script header. The manual steps remain valid.
+
 ## 1. Get the new HVSC
 
 Full release from <https://hvsc.c64.org/> (the current database comes from #85). Replacing the whole
