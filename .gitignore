@@ -20,3 +20,7 @@ c64/chargen_set1.bin
 data/*
 !data/.gitkeep
 banned_ips.txt
+
+# sauvegardes de la base (update_db.sh, déploiements) : jamais dans le dépôt
+*.bak
+jukebox.db.*
