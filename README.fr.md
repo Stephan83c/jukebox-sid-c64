@@ -51,6 +51,7 @@ python3 server.py --root /chemin/vers/C64Music --port 6474      # 0.0.0.0 par d�
 - Sans accès root, un service `systemd --user` convient (`~/.config/systemd/user/jukebox.service`,
   `Restart=on-failure`) ; pour qu'il survive à la fermeture de session et au redémarrage, un administrateur
   doit lancer `sudo loginctl enable-linger <compte>`.
+- Mettre à jour la base des morceaux après une nouvelle HVSC : [docs/UPDATE_DB.fr.md](docs/UPDATE_DB.fr.md).
 - Mise à jour depuis GitHub : `git pull` dans le dossier du serveur (clé de déploiement en lecture seule
   si le dépôt est privé), puis redémarrer le serveur.
 

@@ -51,6 +51,7 @@ python3 server.py --root /path/to/C64Music --port 6474      # listens on 0.0.0.0
 - Without root, a `systemd --user` service works (`~/.config/systemd/user/jukebox.service`,
   `Restart=on-failure`); for it to survive logout and reboot, an administrator must run
   `sudo loginctl enable-linger <account>`.
+- Updating the tune database after a new HVSC release: [docs/UPDATE_DB.md](docs/UPDATE_DB.md).
 - Updating from GitHub: `git pull` in the server folder (a read-only deploy key if the repo is private),
   then restart the server.
 
@@ -133,6 +134,7 @@ title, case-insensitively.
 | `c64/dump_chargen.py` | extracts the character ROM from VICE for `make_scroll.py` |
 | `c64/make_demo.py` | network-less demo build (`make demo`), for testing in VICE |
 
+Updating the tune database: [docs/UPDATE_DB.md](docs/UPDATE_DB.md).
 Project history (in French): [HISTORY.md](HISTORY.md).
 
 ## License and copyright
