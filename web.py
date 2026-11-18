@@ -272,7 +272,7 @@ un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette pa
 <p>Le code source (serveur Python et client C) est sur
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
 Les morceaux viennent de la <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
-Collection</a> ; ils restent la propriété de leurs auteurs et ne sont pas inclus dans le client.</p>
+Collection</a> ; ils restent la propriété de leurs auteurs et ne sont pas inclus dans le client. Lis l'<a href="https://hvsc.c64.org/info" target="_blank" rel="noopener noreferrer">avis de droit d'auteur de la HVSC</a> (en anglais) : tout usage autre que l'écoute privée relève du droit d'auteur.</p>
 </section>"""
 
 ABOUT_EN = """<section class="about" aria-labelledby="ab">
@@ -301,7 +301,7 @@ and a scroller. <b>The scroller text is the one you change on this page.</b></p>
 <p>The source code (Python server and C client) is on
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
 The tunes come from the <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
-Collection</a>; they remain the property of their authors and are not included in the client.</p>
+Collection</a>; they remain the property of their authors and are not included in the client. Please read the <a href="https://hvsc.c64.org/info" target="_blank" rel="noopener noreferrer">HVSC copyright notice</a>: any use beyond private enjoyment is subject to copyright law.</p>
 </section>"""
 
 # Textes de l'interface par langue (HTML de confiance : jamais de texte de visiteur ici)
