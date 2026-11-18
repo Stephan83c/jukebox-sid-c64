@@ -81,9 +81,7 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture.
 - **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`
   sont fixés dans le `Makefile` à la compilation (valeurs actuelles : `boombass.net`, `6474`). Piste : champ
   modifiable au clavier, comme dans *Belote LAN C64* (touche F3).
-- **Service permanent** : activer `linger` (root) puis `systemctl --user enable --now jukebox` ; le serveur
-  tourne pour l'instant en processus détaché (ne survit pas à un redémarrage de la machine).
-- **Licence** pour le code (non choisie) ; dépôt GitHub privé : `Stephan83c/jukebox-sid-c64`.
+- Code sous licence MIT (ajoutée après la v1.1, ne couvre pas les morceaux de la HVSC) ; dépôt GitHub privé : `Stephan83c/jukebox-sid-c64`.
 - Le texte du scroller ne change qu'au morceau suivant ; un rafraîchissement en cours de lecture
   demanderait un accès réseau pendant le morceau (risque pour la synchronisation).
 - Chiffres dans le scroller (alphabet limité à 32 glyphes : il faudrait libérer de la mémoire).

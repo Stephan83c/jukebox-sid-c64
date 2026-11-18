@@ -134,8 +134,8 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
 | `c64/dump_chargen.py` | extrait la ROM des caractères de VICE pour `make_scroll.py` |
 | `c64/make_demo.py` | version démo sans réseau (`make demo`), pour tester dans VICE |
 
-## Droits d'auteur
+## Licence et droits d'auteur
 
-Les morceaux de la HVSC sont protégés ; leur usage hors écoute privée est soumis au droit d'auteur
+Le code est publié sous [licence MIT](LICENSE). Les morceaux de la HVSC sont protégés ; leur usage hors écoute privée est soumis au droit d'auteur
 (voir `DOCUMENTS/Disclaimer.txt` de la HVSC). Ce dépôt ne contient aucun morceau ni la ROM du C64 ;
 héberger un serveur public est une question à régler avec l'équipe HVSC ou les compositeurs.
