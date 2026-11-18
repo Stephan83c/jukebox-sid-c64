@@ -1,0 +1,14 @@
+# Mots interdits dans le scroller (un par ligne, majuscules ou minuscules, # = commentaire).
+# Comparaison sur les lettres seules, espaces et ponctuation retirés : "F U C K" est aussi refusé.
+# Attention aux mots courts : ils bloquent aussi les mots qui les contiennent. À compléter selon les besoins.
+FUCK
+SHIT
+BITCH
+CUNT
+NIGGER
+FAGGOT
+PUTE
+SALOPE
+ENCULE
+NAZI
+HITLER

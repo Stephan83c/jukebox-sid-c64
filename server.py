@@ -14,6 +14,7 @@ import argparse
 import asyncio
 import logging
 import sqlite3
+import time
 import unicodedata
 from pathlib import Path
 
@@ -44,11 +45,26 @@ def scroll_text(path: Path) -> str:
 
 
 class Jukebox:
-    def __init__(self, db: Path, root: Path, scroll: Path | None = None):
-        self.scroll = scroll
+    def __init__(self, db: Path, root: Path, scroll: Path | None = None,
+                 scroll_user: Path | None = None, scroll_ttl: int = 3600):
+        self.scroll_default = scroll
+        self.scroll_user = scroll_user
+        self.scroll_ttl = scroll_ttl
         self.con = sqlite3.connect(db, check_same_thread=False)
         self.con.row_factory = sqlite3.Row
         self.root = root
+
+    @property
+    def scroll(self) -> Path | None:
+        """Texte proposé par les utilisateurs (page web) s'il a moins de scroll_ttl secondes,
+        sinon texte par défaut. L'âge du fichier est l'heure du dernier changement."""
+        u = self.scroll_user
+        try:
+            if u and time.time() - u.stat().st_mtime < self.scroll_ttl:
+                return u
+        except OSError:
+            pass
+        return self.scroll_default
 
     def pick(self, pattern: str | None = None):
         if pattern:
@@ -133,11 +149,14 @@ async def main():
     ap.add_argument("--root", type=Path, required=True, help="dossier C64Music")
     ap.add_argument("--scroll", type=Path, default=Path(__file__).resolve().parent / "scroll.txt",
                     help="texte du scroller (relu à chaque morceau)")
+    ap.add_argument("--scroll-user", type=Path, default=Path(__file__).resolve().parent / "scroll_user.txt",
+                    help="texte écrit par web.py ; remplacé par --scroll après --scroll-ttl secondes")
+    ap.add_argument("--scroll-ttl", type=int, default=3600)
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=6474)
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-    jb = Jukebox(a.db, a.root, a.scroll)
+    jb = Jukebox(a.db, a.root, a.scroll, a.scroll_user, a.scroll_ttl)
     srv = await asyncio.start_server(lambda r, w: handle(r, w, jb), a.host, a.port)
     ok, total = jb.stats()
     log.info("jukebox sur %s:%d, %d morceaux compatibles sur %d", a.host, a.port, ok, total)

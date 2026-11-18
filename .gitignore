@@ -15,3 +15,8 @@ c64/demo.s
 
 # ROM des caractères du C64 : à regénérer avec dump_chargen.py (on ne redistribue pas la ROM)
 c64/chargen_set1.bin
+
+# page web du scroller : état local du serveur
+scroll_user.txt
+web_changes.log
+banned_ips.txt
