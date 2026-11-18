@@ -240,10 +240,10 @@ un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette pa
 <h2>L'ESSAYER</h2>
 <ol>
 <li>Il te faut un <b>C64 Ultimate</b> relié à Internet, avec la <i>Command Interface</i> activée.</li>
-<li>Télécharge le client C64, le fichier <code>jukebox-boombass.prg</code>, dans les releases GitHub :<br>
+<li>Télécharge le client C64, le fichier <code>jukebox-sid.prg</code>, dans les releases GitHub :<br>
 <a class="dl" href="https://github.com/Stephan83c/jukebox-sid-c64/releases/latest" target="_blank" rel="noopener noreferrer">Télécharger le client</a></li>
 <li>Lance-le sur l'Ultimate : depuis une clé USB ou une carte SD, ou par le réseau avec
-<code>curl -X POST --data-binary @jukebox-boombass.prg http://IP-DE-TON-ULTIMATE/v1/runners:run_prg</code></li>
+<code>curl -X POST --data-binary @jukebox-sid.prg http://IP-DE-TON-ULTIMATE/v1/runners:run_prg</code></li>
 <li>Il se connecte tout seul à ce serveur (<code>boombass.net</code>, port 6474) et joue un morceau au hasard.</li>
 </ol>
 <h2>LES TOUCHES</h2>

@@ -38,8 +38,8 @@ deploy: $(PRG)
 REPO ?= Stephan83c/jukebox-sid-c64
 release: $(PRG)
 	@test -n "$(TAG)" || { echo "usage: make release TAG=vX.Y"; exit 1; }
-	cp $(PRG) build/jukebox-boombass.prg
-	gh release upload $(TAG) build/jukebox-boombass.prg --clobber -R $(REPO)
+	cp $(PRG) build/jukebox-sid.prg
+	gh release upload $(TAG) build/jukebox-sid.prg --clobber -R $(REPO)
 
 clean:
 	rm -rf build *.o
