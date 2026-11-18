@@ -1,0 +1,41 @@
+# Serveur de morceaux. Droits minimaux : tout en lecture seule (la base est ouverte en lecture seule par le code).
+# Installation : cp deploy/jukebox.service ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user restart jukebox
+# Ne pas redémarrer pendant qu'un C64 est connecté (voir README).
+[Unit]
+Description=Jukebox SID serveur
+
+[Service]
+WorkingDirectory=%h/jukebox
+ExecStart=/usr/bin/python3 server.py --root %h/jukebox/C64Music --port 6474
+Restart=on-failure
+
+ProtectSystem=strict
+ProtectHome=tmpfs
+BindReadOnlyPaths=%h/jukebox
+InaccessiblePaths=-%h/jukebox/data/web_changes.log -%h/jukebox/banned_ips.txt
+PrivateTmp=true
+PrivateDevices=true
+ProtectProc=invisible
+ProcSubset=pid
+
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+MemoryMax=400M
+TasksMax=256
+
+[Install]
+WantedBy=default.target

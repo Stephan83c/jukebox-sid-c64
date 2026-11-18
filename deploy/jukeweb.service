@@ -1,0 +1,44 @@
+# Page web du scroller. Droits minimaux : écrit seulement dans ~/jukebox/data, ne voit ni la base ni les morceaux.
+# Installation : cp deploy/jukeweb.service ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now jukeweb
+[Unit]
+Description=Page web du scroller jukebox
+
+[Service]
+WorkingDirectory=%h/jukebox
+ExecStart=/usr/bin/python3 %h/jukebox/web.py --port 6475
+Restart=on-failure
+
+# système de fichiers : tout en lecture seule sauf data/ ; le reste du compte est caché
+ProtectSystem=strict
+ProtectHome=tmpfs
+BindReadOnlyPaths=%h/jukebox
+BindPaths=%h/jukebox/data
+InaccessiblePaths=%h/jukebox/jukebox.db %h/jukebox/C64Music
+PrivateTmp=true
+PrivateDevices=true
+ProtectProc=invisible
+ProcSubset=pid
+
+# privilèges, noyau, réseau, appels système
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+# ressources
+MemoryMax=128M
+TasksMax=128
+
+[Install]
+WantedBy=default.target

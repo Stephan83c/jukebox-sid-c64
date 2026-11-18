@@ -2,7 +2,7 @@
 """Page web pour changer le texte du scroller du jukebox.
 
 Règles : majuscules (forcées), alphabet du C64 (A-Z * . , ! ? - espace), 150 caractères au plus,
-une seule modification toutes les 3 minutes pour tout le monde (pause globale). Le texte est écrit dans
+une seule modification toutes les 3 minutes pour tout le monde (pause globale) et toutes les 10 minutes par IP. Le texte est écrit dans
 scroll_user.txt ; server.py l'utilise pendant 1 heure, puis retombe sur scroll.txt (message par défaut).
 L'heure du dernier changement est la date du fichier : rien à mémoriser, ça survit aux redémarrages.
 
@@ -28,15 +28,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from server import SCROLL_ALPHABET, SCROLL_MAX
+from server import SCROLL_ALPHABET, SCROLL_MAX, ipkey
 
 log = logging.getLogger("jukeweb")
 HERE = Path(__file__).resolve().parent
+DATA = HERE / "data"     # seul dossier où le service web a le droit d'écrire
 MIN_LEN = 3
 MAX_BODY = 1024
 TOKEN_MIN_AGE = 3          # secondes : un humain met plus de temps qu'un robot à remplir le formulaire
 TOKEN_MAX_AGE = 3600
 RATE_WINDOW, RATE_MAX = 60, 30      # requêtes par IP et par minute
+MAX_THREADS = 64                    # connexions traitées en même temps ; au-delà, refus immédiat
 
 ALLOWED_TXT = "A-Z * . , ! ? - et espace"
 
@@ -47,6 +49,7 @@ class State:
         self.lock = threading.Lock()
         self.secret = secrets.token_bytes(32)
         self.hits: dict[str, list[float]] = {}
+        self.ip_last: dict[str, float] = {}      # clé d'IP -> heure de son dernier changement réussi
 
     # --- fichiers -------------------------------------------------------------------------
     def last_change(self) -> float | None:
@@ -74,12 +77,25 @@ class State:
 
     def banned_ip(self, ip: str) -> bool:
         try:
-            return ip in {l.split("#")[0].strip() for l in (HERE / "banned_ips.txt").read_text().splitlines()}
+            ban = {l.split("#")[0].strip() for l in (HERE / "banned_ips.txt").read_text().splitlines()}
+            return ip in ban or ipkey(ip) in ban
         except OSError:
             return False
 
     # --- anti-robots ----------------------------------------------------------------------
+    def ip_wait(self, ip: str) -> float:
+        """Secondes à attendre pour cette IP (pause par IP, en plus de la pause globale). À appeler sous verrou ou en lecture seule."""
+        t = self.ip_last.get(ipkey(ip))
+        return max(0.0, self.a.ip_cooldown - (time.time() - t)) if t else 0.0
+
+    def mark(self, ip: str):
+        now = time.time()
+        self.ip_last[ipkey(ip)] = now
+        if len(self.ip_last) > 5000:
+            self.ip_last = {k: t for k, t in self.ip_last.items() if now - t < self.a.ip_cooldown}
+
     def rate_ok(self, ip: str) -> bool:
+        ip = ipkey(ip)
         now = time.time()
         with self.lock:
             h = [t for t in self.hits.get(ip, []) if now - t < RATE_WINDOW]
@@ -227,10 +243,11 @@ def rainbow(text: str, shift: int = 0) -> str:
     return "".join(out)
 
 
-def render(st: State, message: str = "", ok: bool = False, value: str = "") -> bytes:
+def render(st: State, ip: str, message: str = "", ok: bool = False, value: str = "") -> bytes:
     cur, from_user = st.current()
     last = st.last_change()
     wait_s = max(0.0, st.a.cooldown - (time.time() - last)) if last else 0.0
+    wait_s = max(wait_s, st.ip_wait(ip))
     left = st.a.ttl - (time.time() - last) if (from_user and last) else 0.0
     msg = '<div class="msg %s" role="status">%s</div>' % ("ok" if ok else "err", html.escape(message)) if message else ""
     vals = {
@@ -248,6 +265,28 @@ def render(st: State, message: str = "", ok: bool = False, value: str = "") -> b
     }
     # une seule passe : le texte saisi par un visiteur n'est jamais réinterprété comme un champ
     return re.sub(r"@@(\w+)@@", lambda m: vals[m.group(1)], PAGE).encode("utf-8")
+
+
+class BoundedServer(ThreadingHTTPServer):
+    """Un fil par connexion, mais au plus MAX_THREADS à la fois : au-delà on ferme tout de suite."""
+    daemon_threads = True
+    request_queue_size = 64
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.slots = threading.BoundedSemaphore(MAX_THREADS)
+
+    def process_request(self, request, client_address):
+        if not self.slots.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        super().process_request(request, client_address)
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self.slots.release()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -294,7 +333,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path.split("?")[0] != "/":
             return self.reply(404, b"introuvable", "text/plain; charset=utf-8")
-        self.reply(200, render(self.st))
+        self.reply(200, render(self.st, self.ip()))
 
     def do_POST(self):
         if not self.gate():
@@ -312,29 +351,36 @@ class Handler(BaseHTTPRequestHandler):
         st, ip = self.st, self.ip()
         if get("site") or not st.token_ok(get("k")):
             log.info("%s refusé (robot ou formulaire trop rapide/périmé)", ip)
-            return self.reply(200, render(st, "Formulaire périmé ou envoyé trop vite : réessaie."))
+            return self.reply(200, render(st, ip, "Formulaire périmé ou envoyé trop vite : réessaie."))
         txt, err = check_text(st, get("t"))
         if txt is None:
-            return self.reply(200, render(st, err, value=get("t")[:SCROLL_MAX * 2]))
+            return self.reply(200, render(st, ip, err, value=get("t")[:SCROLL_MAX * 2]))
         with st.lock:                       # la pause est vérifiée et armée sous le même verrou
             last = st.last_change()
             wait = st.a.cooldown - (time.time() - last) if last else 0
             if wait > 0:
-                return self.reply(200, render(st, "Trop tôt : encore %s avant le prochain changement." % fmt(wait),
+                return self.reply(200, render(st, ip, "Trop tôt : encore %s avant le prochain changement." % fmt(wait),
                                               value=txt))
+            wait = st.ip_wait(ip)
+            if wait > 0:
+                return self.reply(200, render(st, ip, "Tu as déjà changé le texte : encore %s avant de pouvoir "
+                                              "recommencer." % fmt(wait), value=txt))
             write_atomic(st.a.user_file, txt)
+            st.mark(ip)
         with open(st.a.history, "a", encoding="utf-8") as f:
             f.write(json.dumps({"t": time.strftime("%Y-%m-%d %H:%M:%S"), "ip": ip, "text": txt}) + "\n")
         log.info("%s nouveau texte : %s", ip, txt)
-        self.reply(200, render(st, "C'est enregistré. Le texte apparaîtra au prochain morceau.", ok=True))
+        self.reply(200, render(st, ip, "C'est enregistré. Le texte apparaîtra au prochain morceau.", ok=True))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--user-file", dest="user_file", type=Path, default=HERE / "scroll_user.txt")
+    ap.add_argument("--user-file", dest="user_file", type=Path, default=DATA / "scroll_user.txt")
     ap.add_argument("--default-file", dest="default_file", type=Path, default=HERE / "scroll.txt")
-    ap.add_argument("--history", type=Path, default=HERE / "web_changes.log")
+    ap.add_argument("--history", type=Path, default=DATA / "web_changes.log")
     ap.add_argument("--cooldown", type=int, default=180, help="secondes entre deux changements (global)")
+    ap.add_argument("--ip-cooldown", dest="ip_cooldown", type=int, default=600,
+                    help="secondes entre deux changements de la même IP (IPv6 : même bloc /64)")
     ap.add_argument("--ttl", type=int, default=3600, help="secondes avant retour au message par défaut")
     ap.add_argument("--trust-proxy", action="store_true")
     ap.add_argument("--host", default="0.0.0.0")
@@ -342,8 +388,7 @@ def main():
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     Handler.st = State(a)
-    srv = ThreadingHTTPServer((a.host, a.port), Handler)
-    srv.daemon_threads = True
+    srv = BoundedServer((a.host, a.port), Handler)
     log.info("page du scroller sur http://%s:%d/", a.host, a.port)
     srv.serve_forever()
 

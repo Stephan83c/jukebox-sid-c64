@@ -17,6 +17,6 @@ c64/demo.s
 c64/chargen_set1.bin
 
 # page web du scroller : état local du serveur
-scroll_user.txt
-web_changes.log
+data/*
+!data/.gitkeep
 banned_ips.txt

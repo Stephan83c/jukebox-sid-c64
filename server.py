@@ -12,6 +12,7 @@ Protocole texte (une commande par ligne, réponses terminées par \\n) :
 """
 import argparse
 import asyncio
+import ipaddress
 import logging
 import sqlite3
 import time
@@ -20,6 +21,25 @@ from pathlib import Path
 
 log = logging.getLogger("jukebox")
 DEFAULT_SECONDS = 180
+MAX_CONN_IP = 8          # connexions simultanées par IP (un C64 en prend une)
+MAX_CONN = 200           # connexions simultanées au total
+REQ_WINDOW, REQ_MAX = 60, 30      # commandes par IP et par minute
+FIRST_LINE_TIMEOUT = 20  # secondes pour envoyer la première commande (sinon on coupe)
+IDLE_TIMEOUT = 300       # secondes d'attente entre deux commandes (un C64 reste connecté pendant un morceau)
+MAX_LINE = 1024          # taille maximale d'une commande
+
+
+def ipkey(ip: str) -> str:
+    """Clé de limitation : l'IPv4 telle quelle, l'IPv6 réduite à son bloc /64 (un abonné en a des milliards)."""
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip[:64]
+    if a.version == 6:
+        if a.ipv4_mapped:
+            return str(a.ipv4_mapped)
+        return str(ipaddress.ip_network((a, 64), strict=False))
+    return str(a)
 
 
 def clean(s: str) -> str:
@@ -50,7 +70,11 @@ class Jukebox:
         self.scroll_default = scroll
         self.scroll_user = scroll_user
         self.scroll_ttl = scroll_ttl
-        self.con = sqlite3.connect(db, check_same_thread=False)
+        # base ouverte en lecture seule : le serveur n'écrit jamais dedans (update_db.sh la remplace de l'extérieur)
+        self.con = sqlite3.connect(db.resolve().as_uri() + "?mode=ro", uri=True, check_same_thread=False)
+        self.conns: dict[str, int] = {}                  # connexions ouvertes par IP
+        self.total = 0
+        self.reqs: dict[str, list[float]] = {}           # horodatage des commandes récentes par IP
         self.con.row_factory = sqlite3.Row
         self.root = root
 
@@ -65,6 +89,30 @@ class Jukebox:
         except OSError:
             pass
         return self.scroll_default
+
+    def admit(self, ip: str) -> bool:
+        """Ouvre une place pour cette IP, ou refuse si l'IP ou le serveur est plein."""
+        if self.total >= MAX_CONN or self.conns.get(ip, 0) >= MAX_CONN_IP:
+            return False
+        self.conns[ip] = self.conns.get(ip, 0) + 1
+        self.total += 1
+        return True
+
+    def leave(self, ip: str):
+        self.total -= 1
+        if self.conns[ip] <= 1:
+            del self.conns[ip]
+        else:
+            self.conns[ip] -= 1
+
+    def req_ok(self, ip: str) -> bool:
+        now = time.time()
+        h = [t for t in self.reqs.get(ip, []) if now - t < REQ_WINDOW]
+        h.append(now)
+        self.reqs[ip] = h
+        if len(self.reqs) > 5000:
+            self.reqs = {k: v for k, v in self.reqs.items() if v and now - v[-1] < REQ_WINDOW}
+        return len(h) <= REQ_MAX
 
     def pick(self, pattern: str | None = None):
         if pattern:
@@ -112,12 +160,23 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row, scroll: Path | No
 
 async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
     peer = w.get_extra_info("peername")
+    ip = ipkey(peer[0]) if peer else "?"
+    if not jb.admit(ip):
+        log.info("refusé %s (trop de connexions)", peer)
+        w.close()
+        return
     log.info("connexion %s", peer)
+    first = True
     try:
         while True:
-            line = await asyncio.wait_for(r.readline(), timeout=300)
+            line = await asyncio.wait_for(r.readline(), timeout=FIRST_LINE_TIMEOUT if first else IDLE_TIMEOUT)
+            first = False
             if not line:
                 break
+            if not jb.req_ok(ip):
+                w.write(b"ERR|trop de requetes\n")
+                await w.drain()
+                continue
             cmd, _, arg = line.decode("latin-1").strip().partition(" ")
             cmd = cmd.upper()
             arg = arg.strip()
@@ -136,9 +195,12 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
             else:
                 w.write(b"ERR|commande inconnue\n")
             await w.drain()
-    except (asyncio.TimeoutError, ConnectionError):
+    except (asyncio.TimeoutError, ConnectionError, ValueError):     # ValueError : ligne plus longue que MAX_LINE
         pass
+    except Exception:
+        log.exception("erreur avec %s", peer)
     finally:
+        jb.leave(ip)
         w.close()
         log.info("déconnexion %s", peer)
 
@@ -149,7 +211,7 @@ async def main():
     ap.add_argument("--root", type=Path, required=True, help="dossier C64Music")
     ap.add_argument("--scroll", type=Path, default=Path(__file__).resolve().parent / "scroll.txt",
                     help="texte du scroller (relu à chaque morceau)")
-    ap.add_argument("--scroll-user", type=Path, default=Path(__file__).resolve().parent / "scroll_user.txt",
+    ap.add_argument("--scroll-user", type=Path, default=Path(__file__).resolve().parent / "data" / "scroll_user.txt",
                     help="texte écrit par web.py ; remplacé par --scroll après --scroll-ttl secondes")
     ap.add_argument("--scroll-ttl", type=int, default=3600)
     ap.add_argument("--host", default="0.0.0.0")
@@ -157,7 +219,7 @@ async def main():
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     jb = Jukebox(a.db, a.root, a.scroll, a.scroll_user, a.scroll_ttl)
-    srv = await asyncio.start_server(lambda r, w: handle(r, w, jb), a.host, a.port)
+    srv = await asyncio.start_server(lambda r, w: handle(r, w, jb), a.host, a.port, limit=MAX_LINE)
     ok, total = jb.stats()
     log.info("jukebox sur %s:%d, %d morceaux compatibles sur %d", a.host, a.port, ok, total)
     async with srv:
