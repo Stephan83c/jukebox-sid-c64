@@ -182,7 +182,7 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </style></head><body><main>
 <h1>@@title@@</h1>
 <div class="row"><span class="lab">TEXTE:</span> <span class="val">@@source@@</span></div>
-<div class="row"><span class="lab">PROCHAIN CHANGEMENT:</span> <span class="val">@@next@@</span></div>
+<div class="row"><span class="lab">PROCHAIN CHANGEMENT:</span> <span class="val" id="nx" data-w="@@wait@@">@@next@@</span></div>
 <div class="row"><span class="lab">RETOUR AU DEFAUT:</span> <span class="val">@@reset@@</span></div>
 <div class="sp"></div>
 <div class="bar"></div><div class="bar"></div><div class="bar"></div>
@@ -195,7 +195,7 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 <input type="hidden" name="k" value="@@token@@">
 <input class="hp" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div class="sp"></div>
-<button @@disabled@@>ENVOYER</button>
+<button id="b" @@disabled@@>ENVOYER</button>
 </form>
 <p class="help">Majuscules, @@allowed@@, @@max@@ caracteres au plus. Une modification toutes les 3 minutes pour
 tout le monde ; sans nouveau texte pendant 1 heure, le message par defaut revient. Le texte apparait sur le C64
@@ -206,6 +206,11 @@ au morceau suivant, pas tout de suite.</p>
 var t=document.getElementById('t'),n=document.getElementById('n');
 function up(){var p=t.selectionStart;t.value=t.value.toUpperCase();t.setSelectionRange(p,p);n.textContent=t.value.length}
 t.addEventListener('input',up);up();
+var nx=document.getElementById('nx'),b=document.getElementById('b'),w=parseFloat(nx.dataset.w)||0,end=Date.now()+w*1000;
+function tick(){var r=Math.ceil((end-Date.now())/1000);
+if(r<=0){nx.textContent='MAINTENANT';b.disabled=false;return}
+nx.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(tick,250)}
+if(w>0)tick();
 </script></body></html>
 """
 
@@ -232,6 +237,7 @@ def render(st: State, message: str = "", ok: bool = False, value: str = "") -> b
         "title": rainbow("JUKEBOX SID"),
         "source": "VISITEUR" if from_user else "PAR DEFAUT",
         "next": fmt(wait_s) if wait_s else "MAINTENANT",
+        "wait": "%.1f" % wait_s,
         "reset": fmt(left) if left > 0 else "-",
         "current": rainbow(cur or " ", 3),
         "current_plain": html.escape(cur, quote=True),
