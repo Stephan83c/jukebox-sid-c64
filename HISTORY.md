@@ -104,4 +104,4 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture, **décompresseur 
   vérifiées à distance) et l'enchaînement à la fin d'un morceau en durée normale.
 - Série de morceaux au hasard pour repérer ceux qui plantent le lecteur, puis resserrer le tri.
 - Un chat (écarté pour l'instant : la page zéro et les sockets sont les deux obstacles).
-- Serveur public en ligne depuis la v1.1 : la question des droits des morceaux (HVSC) reste à régler.
+- Serveur public en ligne depuis la v1.1 : l'équipe HVSC a répondu le 2026-11-19 « It's all ok for us, please go on with your project. » (avis favorable, pas une licence : les droits restent aux compositeurs).

@@ -143,4 +143,5 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
 
 Le code est publié sous [licence MIT](LICENSE). Les morceaux de la HVSC sont protégés ; leur usage hors écoute privée est soumis au droit d'auteur
 (voir `DOCUMENTS/Disclaimer.txt` de la HVSC). Ce dépôt ne contient aucun morceau ni la ROM du C64 ;
-héberger un serveur public est une question à régler avec l'équipe HVSC ou les compositeurs.
+le serveur public a été soumis à l'équipe HVSC, qui a répondu le 2026-11-19 : « It's all ok for us, please go on with your
+project. » C'est l'avis favorable de l'équipe, pas une licence : les droits restent aux compositeurs.

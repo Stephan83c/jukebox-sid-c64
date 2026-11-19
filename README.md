@@ -144,5 +144,6 @@ Project history (in French): [HISTORY.md](HISTORY.md).
 ## License and copyright
 
 The code is released under the [MIT License](LICENSE). The HVSC tunes are copyrighted; any use beyond private listening is subject to copyright (see the HVSC's
-`DOCUMENTS/Disclaimer.txt`). This repository contains no tunes and no C64 ROM; running a public server is a
-question to settle with the HVSC team or the composers.
+`DOCUMENTS/Disclaimer.txt`). This repository contains no tunes and no C64 ROM; running a public server was
+discussed with the HVSC team, who replied on 2026-11-19: "It's all ok for us, please go on with your project." This is
+the team's approval, not a licence: the rights stay with the original composers.
