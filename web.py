@@ -161,7 +161,7 @@ def fmt(s: float) -> str:
     return "%d min %02d s" % (s // 60, s % 60) if s >= 60 else "%d s" % s
 
 
-RAINBOW = ["#d9548f", "#d98a3d", "#f2e24b", "#8be36b", "#63d9c9", "#7b7cf2", "#4a4ad9", "#b44fd6"]
+RAINBOW = ["#b44fd6", "#4a4ad9", "#7b7cf2", "#63d9c9", "#8be36b", "#f2e24b", "#d98a3d", "#d9548f"]
 
 PAGE = """<!doctype html>
 <html lang="@@lang@@"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -177,8 +177,8 @@ border:10px solid #3a3aa8;border-radius:6px}
 h1{font-size:2.1rem;text-align:center;margin:4px 0 26px;letter-spacing:.35em;font-weight:700}
 .row{margin:2px 0}.lab{color:var(--lb)}.val{color:var(--yl)}
 .sp{height:22px}
-.bar{height:5px;margin:7px 0;background:linear-gradient(90deg,#d9548f 0 14%,#d98a3d 14% 28%,#f2e24b 28% 42%,
-#8be36b 42% 56%,#63d9c9 56% 70%,#7b7cf2 70% 84%,#4a4ad9 84% 100%)}
+.bar{height:5px;margin:7px 0;background:linear-gradient(90deg,#4a4ad9 0 14%,#7b7cf2 14% 28%,#63d9c9 28% 42%,
+#8be36b 42% 56%,#f2e24b 56% 70%,#d98a3d 70% 84%,#d9548f 84% 100%)}
 .scr{overflow:hidden;white-space:pre;margin:22px 0;font-size:1.5rem;font-weight:700;border-top:2px solid #1d1d55;
 border-bottom:2px solid #1d1d55;padding:8px 0}
 .scr span.run{display:inline-block;padding-left:100%;animation:run var(--d) linear infinite;animation-delay:calc(var(--d) * -.12)}

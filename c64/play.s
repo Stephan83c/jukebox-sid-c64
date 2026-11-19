@@ -89,13 +89,13 @@ glyphs: .byte 0,0,0,$00,$00,0,0,0
         .byte 0,0,0,$FF,$FF,0,0,0
 
 ; couleurs du logo et du scroller (défilent)
-rainbow: .byte 2, 8, 7, 5, 3, 14, 4, 10
+rainbow: .byte 10, 4, 14, 3, 5, 7, 8, 2
 ; Dégradé arc-en-ciel des vu-mètres, une couleur par case (32 cases), sans noir.
 vucolors:
-        .byte   2, 2, 2, 2, 8, 8, 8, 8
-        .byte   7, 7, 7, 13, 13, 13, 13, 5
-        .byte   5, 5, 3, 3, 3, 3, 14, 14
-        .byte   14, 6, 6, 6, 6, 4, 4, 4
+        .byte   4, 4, 4, 6, 6, 6, 6, 14
+        .byte   14, 14, 3, 3, 3, 3, 5, 5
+        .byte   5, 13, 13, 13, 13, 7, 7, 7
+        .byte   8, 8, 8, 8, 2, 2, 2, 2
 
         .code
 
