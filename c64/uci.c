@@ -1,6 +1,3 @@
-#include "ascii.h"
-#include <string.h>
-#include "uci.h"
 
 /* Registres : $DF1C contrôle (écriture) / état (lecture) ; $DF1D commande
  * (écriture) / identification $C9 (lecture) ; $DF1E données de réponse ;

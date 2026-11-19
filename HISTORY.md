@@ -91,6 +91,18 @@ RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture, **décompresseur 
 - Des instructions du type `sta $0000,x` dont on modifie l'adresse doivent être forcées en absolu
   (`a:$0000,x`), sinon l'assembleur les code sur 2 octets.
 
+## Passage à Oscar64 (2026-11-19)
+
+Le client C est passé de cc65 à **Oscar64**, sans changer le lecteur (`play.s`, `logo.s`, `scroll.s` restent en ca65) :
+`client.c` assemble `console.c` (remplace conio), `uci.c` et `main.c` ; `build.sh` lie d'abord le lecteur à `HISTART`
+(`asm.bin`), génère les adresses de ses variables pour le C, compile en deux passes (la première donne la taille de
+l'image que le copieur du démarrage recopie de `$0900` vers `HISTART`). `boot.s`, `stack.s` (la pile d'Oscar64 est en haut
+de la zone résidente) et `jukebox.cfg` ont disparu. Essais préalables : `-Oirs -Cl` de cc65 et llvm-mos ne gagnaient rien ;
+Oscar64 libère environ 2 Ko (fin de l'image en `$C538` au lieu de `$CCFD` avec `HISTART=$A700`). Même comportement vérifié
+dans VICE (démo) et sur l'Ultimate (morceau reçu du serveur public, lecture). `HISTART` pourrait monter jusqu'à `$B000`
+(environ 460 morceaux de plus) mais le serveur servirait alors des morceaux qui écraseraient les clients `$A700` : il faudrait
+que le client annonce sa limite. Les notes sur cc65 ci-dessus restent vraies pour l'historique (v1.3.3 et avant).
+
 ## À faire / idées
 
 - **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`

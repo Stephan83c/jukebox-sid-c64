@@ -15,7 +15,7 @@ rainbow gradient, a demo-style scroller whose text comes from the server, and th
 ```
  ┌────────────┐   text, TCP :6474     ┌──────────────────────┐
  │  server    │ ◄───────────────────► │  C64 Ultimate        │
- │ server.py  │   RANDOM [pattern]    │  c64/ (cc65 + 6502)  │
+ │ server.py  │   RANDOM [pattern]    │  c64/ (Oscar64 + 6502)  │
  │ jukebox.db │ ──► OK|…|raw code     │  UCI: TCP sockets    │
  └─────┬──────┘                       └──────────────────────┘
        │ indexer.py
@@ -26,7 +26,7 @@ rainbow gradient, a demo-style scroller whose text comes from the server, and th
 
 ## Quick start
 
-Requirements: Python 3 (+ Pillow only to regenerate the logo), `7z`, **cc65** (`cl65`), a C64 Ultimate with
+Requirements: Python 3 (+ Pillow only to regenerate the logo), `7z`, **Oscar64** (C compiler, `make OSC=/path/to/oscar64`) and **cc65** (`ca65`/`ld65`, for the player), a C64 Ultimate with
 the REST API and the *Command Interface* enabled. VICE is optional (hardware-free tests).
 
 ```sh
@@ -41,7 +41,7 @@ cd c64
 make SERVEUR_IP=boombass.net SERVEUR_PORT=6474 ULTIMATE=192.168.1.27 deploy
 ```
 
-`--max-addr` must stay equal to `HISTART - 1` in the Makefile (and to `MEM_HAUT` in `main.c`): it is the upper
+`--max-addr` must stay equal to `HISTART - 1` in the Makefile (and to `MEM_HAUT` in `main.c`, which follows `HISTART` by itself): it is the upper
 limit for tunes, the client lives in the memory above it.
 
 ## Running the server online
@@ -116,8 +116,8 @@ title, case-insensitively.
   power is cycled. The client keeps no socket open while playing; to redeploy, wait for the "déconnexion"
   line in the server log.
 - After a network read error (-1), do not write to or close that socket any more.
-- cc65 converts string and character literals: use numeric values for `|`, `a`, `z`, and
-  `#pragma charmap(0x0A, 0x0A)` for the line feed.
+- The C part is compiled with Oscar64 (plain ASCII literals, no conversion; the player is assembled apart with ca65).
+  Oscar64 keeps its temporaries in zero page `$02-$63`, which the player saves and restores around the tune.
 - RAM under the KERNAL cannot be read back by the CPU (it sees the ROM): anything you need to re-read lives
   in an ordinary buffer.
 - Changing a VIC-II colour mid-line leaves a grey pixel: if you do it, do it in the border.
@@ -131,9 +131,9 @@ title, case-insensitively.
 | `server.py` | asyncio server: draw, search, sends the raw code and the scroller text |
 | `scroll.txt` | scroller text, re-read on every tune |
 | `client_pc.py` | PC test client; can also push a SID to the Ultimate through its REST API |
-| `c64/main.c`, `uci.c` | client: network (UCI), interface, search |
+| `c64/client.c`, `main.c`, `uci.c`, `console.c` | client (Oscar64): network (UCI), interface, search; `console.c` writes straight to screen RAM |
 | `c64/play.s` | PSID player, VU meters, scroller, logo |
-| `c64/boot.s`, `jukebox.cfg` | BASIC launcher and memory map (the program is copied to the top of memory) |
+| `c64/asm.cfg`, `build.sh` | linker map of the player and the two-pass build (the program is loaded at `$0801`, then a small copier in `client.c` moves it to `HISTART`) |
 | `c64/make_logo.py`, `make_scroll.py` | generate `logo.s` and `scroll.s` (committed data; fixed 45-glyph alphabet) |
 | `c64/dump_chargen.py` | extracts the character ROM from VICE for `make_scroll.py` |
 | `c64/make_demo.py` | network-less demo build (`make demo`), for testing in VICE |

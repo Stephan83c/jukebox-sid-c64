@@ -15,7 +15,7 @@ SID, en dégradé arc-en-ciel), scroller de démo dont le texte vient du serveur
 ```
  ┌────────────┐   texte, TCP :6474    ┌──────────────────────┐
  │  serveur   │ ◄───────────────────► │  C64 Ultimate        │
- │ server.py  │   RANDOM [motif]      │  c64/ (cc65 + 6502)  │
+ │ server.py  │   RANDOM [motif]      │  c64/ (Oscar64 + 6502)  │
  │ jukebox.db │ ──► OK|…|code brut    │  UCI : sockets TCP   │
  └─────┬──────┘                       └──────────────────────┘
        │ indexer.py
@@ -26,7 +26,7 @@ SID, en dégradé arc-en-ciel), scroller de démo dont le texte vient du serveur
 
 ## Démarrage rapide
 
-Prérequis : Python 3 (+ Pillow seulement pour regénérer le logo), `7z`, **cc65** (`cl65`), un C64 Ultimate
+Prérequis : Python 3 (+ Pillow seulement pour regénérer le logo), `7z`, **Oscar64** (compilateur C, `make OSC=/chemin/oscar64`) et **cc65** (`ca65`/`ld65`, pour le lecteur), un C64 Ultimate
 avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests sans matériel).
 
 ```sh
@@ -41,7 +41,7 @@ cd c64
 make SERVEUR_IP=boombass.net SERVEUR_PORT=6474 ULTIMATE=192.168.1.27 deploy
 ```
 
-`--max-addr` doit rester égal à `HISTART - 1` du Makefile (et à `MEM_HAUT` de `main.c`) : c'est la limite
+`--max-addr` doit rester égal à `HISTART - 1` du Makefile (et à `MEM_HAUT` de `main.c`, qui suit `HISTART` tout seul) : c'est la limite
 haute des morceaux, le client occupe la mémoire au-dessus.
 
 ## Mettre le serveur en ligne
@@ -116,8 +116,8 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
   l'Ultimate peut se bloquer jusqu'à une coupure de courant. Le client ne garde aucun socket ouvert
   pendant la lecture ; pour redéployer, attendre la ligne « déconnexion » dans le journal du serveur.
 - Après une erreur de lecture réseau (-1), ne plus écrire ni fermer ce socket.
-- cc65 convertit les littéraux de chaîne et de caractère : utiliser des valeurs numériques pour `|`, `a`,
-  `z`, et `#pragma charmap(0x0A, 0x0A)` pour le saut de ligne.
+- La partie C est compilée avec Oscar64 (littéraux ASCII sans conversion ; le lecteur est assemblé à part avec ca65).
+  Oscar64 garde ses temporaires en page zéro `$02-$63`, que le lecteur sauvegarde et restaure autour du morceau.
 - La RAM sous le KERNAL ne peut pas être relue par le processeur (il voit la ROM) : tout ce qu'on doit
   relire vit dans un tampon ordinaire.
 - Changer une couleur du VIC-II en pleine ligne laisse un pixel gris : si on le fait, que ce soit dans
@@ -132,9 +132,9 @@ Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`.
 | `server.py` | serveur asyncio : tirage, recherche, envoi du code brut et du texte du scroller |
 | `scroll.txt` | texte du scroller, relu à chaque morceau |
 | `client_pc.py` | client de test (PC) ; envoie aussi un SID à l'Ultimate par son API REST |
-| `c64/main.c`, `uci.c` | client : réseau (UCI), interface, recherche |
+| `c64/client.c`, `main.c`, `uci.c`, `console.c` | client (Oscar64) : réseau (UCI), interface, recherche ; `console.c` écrit directement en RAM écran |
 | `c64/play.s` | lecteur PSID, vu-mètres, scroller, logo |
-| `c64/boot.s`, `jukebox.cfg` | lanceur BASIC et carte mémoire (le programme est recopié en haut) |
+| `c64/asm.cfg`, `build.sh` | carte mémoire du lecteur et construction en deux passes (chargé en `$0801`, un petit copieur de `client.c` le recopie à `HISTART`) |
 | `c64/make_logo.py`, `make_scroll.py` | génèrent `logo.s` et `scroll.s` (données commitées ; alphabet fixe de 45 glyphes) |
 | `c64/dump_chargen.py` | extrait la ROM des caractères de VICE pour `make_scroll.py` |
 | `c64/make_demo.py` | version démo sans réseau (`make demo`), pour tester dans VICE |

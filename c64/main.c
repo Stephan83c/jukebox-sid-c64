@@ -1,7 +1,3 @@
-#include "ascii.h"
-#include <conio.h>
-#include <string.h>
-#include "uci.h"
 
 #ifndef SERVEUR_IP
 #define SERVEUR_IP "boombass.net"
@@ -18,17 +14,13 @@
 #define MAX_SECS 1000   /* durée maximale d'un morceau (secondes) */
 #endif
 #define MEM_BAS  0x0800u   /* le morceau doit tenir entre ces deux adresses */
-#define MEM_HAUT 0xA6FFu   /* le client occupe $A700-$CFFF (voir Makefile : HISTART) */
+#define MEM_HAUT (RUN - 1u)   /* le client occupe RUN-$CFFF */
 
-extern unsigned init_addr, play_addr, frames_max;
-extern unsigned char fps, vis_on;
-extern unsigned char *scr_ptr, scr_ok;
-extern unsigned char song_nr;
-unsigned char play_run(void);
 
 #ifdef DEMO
-#include "demo.h"
-extern unsigned char demo_data[];
+static const unsigned char demo_data[] = {
+#embed "demo.bin"
+};
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
@@ -45,7 +37,7 @@ static char hdr[340];   /* en-tête OK|... : titre, auteur, année, texte du scr
 static unsigned t_id, t_size, t_secs, t_load, t_fps;
 static char *t_title, *t_author, *t_released;
 
-static unsigned jiffies(void)
+static unsigned jiffies_m(void)
 {
     unsigned char b, h;
     do {
@@ -57,8 +49,8 @@ static unsigned jiffies(void)
 
 static void attendre(unsigned ticks)
 {
-    unsigned t = jiffies();
-    while (jiffies() - t < ticks) {
+    unsigned t = jiffies_m();
+    while (jiffies_m() - t < ticks) {
     }
 }
 
@@ -200,7 +192,7 @@ static unsigned char recuperer(void)
     cmdr[k++] = LF;
     aucun = 0;
     if (net_ecrire(s, cmdr, k)) {
-        t0 = jiffies();
+        t0 = jiffies_m();
         for (;;) {
             n = net_lire(s, (char *)chunk, 120);
             if (n < 0) {
@@ -208,12 +200,12 @@ static unsigned char recuperer(void)
                 break;
             }
             if (n == 0) {
-                if (jiffies() - t0 > 600) {
+                if (jiffies_m() - t0 > 600) {
                     break;
                 }
                 continue;
             }
-            t0 = jiffies();
+            t0 = jiffies_m();
             p = chunk;
             while (!entete && n) {
                 c = *p++;
@@ -416,7 +408,7 @@ static void ecran(void)
     textcolor(COLOR_WHITE);
 }
 
-void main(void)
+void jukebox(void)
 {
     unsigned char r;
     unsigned secs;

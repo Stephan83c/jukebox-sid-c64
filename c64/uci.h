@@ -1,4 +1,4 @@
-/* Ultimate Command Interface ($DF1C-$DF1F), cible réseau. */
+/* Ultimate Command Interface ($DF1C-$DF1F), cible réseau. Inclus par client.c avant uci.c et main.c. */
 #ifndef UCI_H
 #define UCI_H
 
