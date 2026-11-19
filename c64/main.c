@@ -400,7 +400,7 @@ static void ecran(void)
     bgcolor(COLOR_BLACK);
     textcolor(COLOR_WHITE);
     debut(0);
-    cputs("SID JUKEBOX");
+    cputs("SID JUKEBOX V" VERSION);
     debut(1);
     textcolor(COLOR_LIGHTBLUE);
     cputs("SERVER ");

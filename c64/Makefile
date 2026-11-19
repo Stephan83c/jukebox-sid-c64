@@ -2,12 +2,13 @@ SERVEUR_IP ?= boombass.net
 SERVEUR_PORT ?= 6474
 ULTIMATE ?= 192.168.1.27
 HISTART ?= 0xA700
+VERSION ?= 1.4
 MAX_SECS ?= 1000
 VIS ?= 1
 # Oscar64 (https://github.com/drmortalwombat/oscar64) : chemin du compilateur, et de ses fichiers d'en-tête
 # (par défaut le dossier include voisin du dossier bin). cc65 fournit ca65/ld65 pour la partie assembleur.
 OSC ?= oscar64
-export OSC OSCINC SERVEUR_IP SERVEUR_PORT MAX_SECS VIS HISTART
+export OSC OSCINC VERSION SERVEUR_IP SERVEUR_PORT MAX_SECS VIS HISTART
 
 PRG := build/jukebox.prg
 SRC := client.c main.c uci.c uci.h console.c play.s logo.s scroll.s asm.cfg build.sh Makefile
@@ -22,7 +23,7 @@ demo: $(SRC) demo.s demo.h demo.bin
 all: $(PRG)
 
 build/options: FORCE
-	@mkdir -p build; echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS)' | cmp -s - $@ || echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS)' > $@
+	@mkdir -p build; echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS) $(VERSION)' | cmp -s - $@ || echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS) $(VERSION)' > $@
 FORCE:
 
 $(PRG): build/options $(SRC)

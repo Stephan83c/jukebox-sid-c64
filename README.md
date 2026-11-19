@@ -10,7 +10,7 @@ The play screen: giant logo, title / artist / year, elapsed time, three VU meter
 rainbow gradient, a demo-style scroller whose text comes from the server, and the key legend.
 
 ![Play screen (VICE emulation)](docs/screenshot.png)
-*The play screen, captured in the VICE emulator (demo build): rainbow VU meters, server-driven scroller.*
+*The play screen, captured in the VICE emulator (demo build): rainbow title, VU meters, server-driven scroller, version in the corner.*
 
 ```
  ┌────────────┐   text, TCP :6474     ┌──────────────────────┐
@@ -26,7 +26,7 @@ rainbow gradient, a demo-style scroller whose text comes from the server, and th
 
 ## Quick start
 
-Requirements: Python 3 (+ Pillow only to regenerate the logo), `7z`, **Oscar64** (C compiler, `make OSC=/path/to/oscar64`) and **cc65** (`ca65`/`ld65`, for the player), a C64 Ultimate with
+Requirements: Python 3 (`c64/chargen_set1.bin` only to regenerate the logo/scroller, see `dump_chargen.py`), `7z`, **Oscar64** (C compiler, `make OSC=/path/to/oscar64`) and **cc65** (`ca65`/`ld65`, for the player), a C64 Ultimate with
 the REST API and the *Command Interface* enabled. VICE is optional (hardware-free tests).
 
 ```sh

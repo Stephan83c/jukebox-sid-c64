@@ -26,7 +26,7 @@ SID, en dégradé arc-en-ciel), scroller de démo dont le texte vient du serveur
 
 ## Démarrage rapide
 
-Prérequis : Python 3 (+ Pillow seulement pour regénérer le logo), `7z`, **Oscar64** (compilateur C, `make OSC=/chemin/oscar64`) et **cc65** (`ca65`/`ld65`, pour le lecteur), un C64 Ultimate
+Prérequis : Python 3 (`c64/chargen_set1.bin` seulement pour regénérer le logo et le scroller, voir `dump_chargen.py`), `7z`, **Oscar64** (compilateur C, `make OSC=/chemin/oscar64`) et **cc65** (`ca65`/`ld65`, pour le lecteur), un C64 Ultimate
 avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests sans matériel).
 
 ```sh

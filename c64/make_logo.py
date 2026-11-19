@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Génère logo.s : les lettres géantes (16x16 pixels = 4 caractères) du titre.
+"""Génère logo.s : les lettres géantes du titre (16 x 24 pixels = 2 x 3 caractères).
 
-Chaque lettre est dessinée avec une police grasse du PC, seuillée en noir et blanc, puis découpée en
-4 caractères 8x8 (haut-gauche, haut-droit, bas-gauche, bas-droit). Utilisation : make_logo.py [police.ttf]
+Les formes viennent de la même police que le scroller (la vraie police du C64, chargen_set1.bin extraite de VICE
+par dump_chargen.py), agrandie : chaque point de la lettre 8x8 devient un bloc de 2 x 3 pixels. Chaque lettre est
+découpée en 6 caractères 8x8 (2 colonnes, 3 lignes). Codes de caractères : $80-$A7 pour les 40 premiers, puis
+$C2-$D5 pour les 20 suivants (voir play.s).
 """
-import sys
-from PIL import Image, ImageDraw, ImageFont
-
 TEXT = "SID JUKEBOX"
-FONT = sys.argv[1] if len(sys.argv) > 1 else "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-SIZE = int(sys.argv[2]) if len(sys.argv) > 2 else 19
 COL0 = 9                      # première colonne du logo à l'écran (11 lettres x 2 = 22 colonnes)
-BASE = 0x80                   # premier code de caractère personnalisé
+CODES = list(range(0x80, 0xA8)) + list(range(0xC2, 0xE0))      # codes libres, dans l'ordre
+rom = open("chargen_set1.bin", "rb").read()
 
-font = ImageFont.truetype(FONT, SIZE)
+def screen_code(ch):
+    return ord(ch) - 64 if "A" <= ch <= "Z" else ord(ch)
 
 def letter(ch):
-    im = Image.new("L", (16, 16), 0)
-    d = ImageDraw.Draw(im)
-    bb = d.textbbox((0, 0), ch, font=font)
-    w, h = bb[2] - bb[0], bb[3] - bb[1]
-    d.text(((16 - w) // 2 - bb[0], (16 - h) // 2 - bb[1]), ch, font=font, fill=255)
-    return [[1 if im.getpixel((x, y)) > 110 else 0 for x in range(16)] for y in range(16)]
+    """16 colonnes x 24 lignes de 0/1."""
+    g = rom[screen_code(ch) * 8: screen_code(ch) * 8 + 8]
+    px = []
+    for y in range(24):
+        row = g[y // 3]
+        px.append([(row >> (7 - x // 2)) & 1 for x in range(16)])
+    return px
 
 def cell(px, cx, cy):
     out = []
@@ -32,27 +32,24 @@ def cell(px, cx, cy):
         out.append(b)
     return out
 
-glyphs, cells0, cells1 = [], [], []
+glyphs, rows = [], ([], [], [])
 n = 0
 for ch in TEXT:
     if ch == " ":
-        cells0 += [32, 32]
-        cells1 += [32, 32]
+        for r in rows:
+            r += [32, 32]
         continue
     px = letter(ch)
-    for row in px:
-        pass
-    for cy in range(2):
+    for cy in range(3):
         for cx in range(2):
             glyphs += cell(px, cx, cy)
-    code = BASE + 4 * n
-    cells0 += [code, code + 1]
-    cells1 += [code + 2, code + 3]
+    for cy in range(3):
+        k = 6 * n + 2 * cy
+        rows[cy].extend([CODES[k], CODES[k + 1]])
     n += 1
-    if "-v" in sys.argv:
-        print(ch)
-        for row in px:
-            print("".join("#" if v else "." for v in row))
+
+assert 6 * n <= len(CODES), "trop de lettres distinctes"
+ng = len(glyphs)
 
 def bytes_(name, data):
     lines = [f"{name}:"]
@@ -61,9 +58,9 @@ def bytes_(name, data):
     return "\n".join(lines)
 
 with open("logo.s", "w") as f:
-    f.write("; généré par make_logo.py\n        .export logo_glyphs, logo_row0, logo_row1, LOGO_COL, LOGO_NGLYPH\n")
-    f.write(f"LOGO_COL = {COL0}\nLOGO_NGLYPH = {len(glyphs)}\n        .rodata\n")
+    f.write("; généré par make_logo.py\n        .export logo_glyphs, logo_row0, logo_row1, logo_row2, LOGO_COL, LOGO_NGLYPH\n")
+    f.write(f"LOGO_COL = {COL0}\nLOGO_NGLYPH = {ng}\n        .rodata\n")
     f.write(bytes_("logo_glyphs", glyphs) + "\n")
-    f.write(bytes_("logo_row0", cells0) + "\n")
-    f.write(bytes_("logo_row1", cells1) + "\n")
-print(n, "lettres,", len(glyphs), "octets de formes")
+    for i, r in enumerate(rows):
+        f.write(bytes_(f"logo_row{i}", r) + "\n")
+print(n, "lettres,", ng, "octets de formes")

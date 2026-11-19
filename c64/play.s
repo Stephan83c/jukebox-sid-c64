@@ -24,15 +24,16 @@
 ; des vu-mètres, logo géant dont les couleurs défilent).
 
         .macpack cbm
+        .include "version.inc"         ; généré par build.sh : VERSION_TXT (ex. "1.4")
         .export _play_run, _init_addr, _play_addr, _frames_max, _song_nr, _fps, _vis_on
         .export _scr_ptr, _scr_ok
-        .import logo_glyphs, logo_row0, logo_row1, scr_glyphs, scrtext
+        .import logo_glyphs, logo_row0, logo_row1, logo_row2, scr_glyphs, scrtext
 
 
 TIME_OFS   = 9 * 40 + 6             ; position du temps écoulé (ligne 9, colonne 6)
-LOGO_ROW   = 0                      ; le logo occupe les lignes 0 et 1
+LOGO_ROW   = 0                      ; le logo occupe les lignes 0 à 2
 LOGO_COL   = 9                      ; première colonne du logo (11 lettres x 2 colonnes)
-LOGO_LEN   = 320                    ; octets de formes du logo (10 lettres x 4 caractères x 8)
+LOGO_LEN   = 480                    ; octets de formes du logo (10 lettres x 6 caractères x 8) : 320 en $80-$A7, 160 en $C2-$D5
 RASTER     = 252                    ; ligne raster où le morceau est appelé (bas d'écran)
 SCROLL_ROW = 19                     ; scroller : lettres de 12 pixels de haut sur les lignes 19 et 20
 SCRL       = SCR2 + SCROLL_ROW * 40
@@ -74,6 +75,9 @@ _scr_ptr:    .res 2         ; texte du scroller reçu : indices de glyphes, $FF 
 nbot:        .res 1         ; code de la case du bas du caractère suivant
 
         .rodata
+VERLEN = .strlen(VERSION_TXT) + 1        ; « V » puis le numéro
+version: .byte 22                      ; V (code écran)
+        scrcode VERSION_TXT
 ; pas par image (20 ms) : attaque (2 ms .. 8 s) puis déclin/relâchement (6 ms .. 24 s)
 astep:  .byte 255, 255, 255, 212, 134, 91, 75, 64, 51, 20, 10, 6, 5, 2, 1, 1
 dstep:  .byte 255, 212, 106, 71, 45, 30, 25, 21, 17, 7, 3, 2, 2, 1, 1, 1
@@ -455,6 +459,7 @@ logocolor:
         lda     rainbow,y
         sta     $D800 + LOGO_ROW * 40 + LOGO_COL,x
         sta     $D800 + (LOGO_ROW + 1) * 40 + LOGO_COL,x
+        sta     $D800 + (LOGO_ROW + 2) * 40 + LOGO_COL,x
         inx
         cpx     #22
         bne     @l
@@ -510,16 +515,22 @@ vis_start:
         inx
         cpx     #208
         bne     @sh
-        ldx     #0              ; logo : formes des 10 lettres (codes $80-$A7)
+        ldx     #0              ; logo : formes des 10 lettres (codes $80-$A7 puis $C2-$D5)
 @lg:    lda     logo_glyphs,x
         sta     CHR2 + $80 * 8,x
         inx
         bne     @lg
-        ldx     #LOGO_LEN - 256 - 1
+        ldx     #63
 @lg2:   lda     logo_glyphs + 256,x
         sta     CHR2 + $80 * 8 + 256,x
         dex
         bpl     @lg2
+        ldx     #0
+@lg3:   lda     logo_glyphs + 320,x
+        sta     CHR2 + $C2 * 8,x
+        inx
+        cpx     #LOGO_LEN - 320
+        bne     @lg3
         ldx     #0
 @sc:    lda     $0400,x
         sta     SCR2,x
@@ -542,8 +553,17 @@ vis_start:
         sta     SCR2 + LOGO_ROW * 40 + LOGO_COL,x
         lda     logo_row1,x
         sta     SCR2 + (LOGO_ROW + 1) * 40 + LOGO_COL,x
+        lda     logo_row2,x
+        sta     SCR2 + (LOGO_ROW + 2) * 40 + LOGO_COL,x
         dex
         bpl     @lr
+        ldx     #VERLEN - 1     ; version, en haut à droite (gris)
+@ve:    lda     version,x
+        sta     SCR2 + 39 - (VERLEN - 1),x
+        lda     #$0C
+        sta     $D800 + 39 - (VERLEN - 1),x
+        dex
+        bpl     @ve
         lda     $DD00
         and     #$FC            ; banque 3
         sta     $DD00
