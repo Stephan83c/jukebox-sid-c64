@@ -90,12 +90,13 @@ glyphs: .byte 0,0,0,$00,$00,0,0,0
 
 ; couleurs du logo et du scroller (défilent)
 rainbow: .byte 10, 4, 14, 3, 5, 7, 8, 2
-; Dégradé arc-en-ciel des vu-mètres, une couleur par case (32 cases), sans noir.
+; Dégradé arc-en-ciel des vu-mètres, une couleur par case (40 cases), sans noir.
 vucolors:
-        .byte   4, 4, 4, 6, 6, 6, 6, 14
-        .byte   14, 14, 3, 3, 3, 3, 5, 5
-        .byte   5, 13, 13, 13, 13, 7, 7, 7
-        .byte   8, 8, 8, 8, 2, 2, 2, 2
+        .byte   4, 4, 4, 4, 4, 6, 6, 6
+        .byte   6, 14, 14, 14, 14, 3, 3, 3
+        .byte   3, 5, 5, 5, 5, 13, 13, 13
+        .byte   13, 7, 7, 7, 7, 8, 8, 8
+        .byte   8, 8, 2, 2, 2, 2, 2, 2
 
         .code
 
@@ -309,7 +310,7 @@ model:
         jmp     @voice
 @mend:  rts
 
-; Une barre fine (2 pixels de haut) : vh[vnum] pixels (0-255) sur 32 cases de 8 pixels.
+; Une barre fine (2 pixels de haut) : vh[vnum] * 1,25 pixels (0-255 -> 0-318) sur 40 cases de 8 pixels (toute la ligne).
 ; Caractères $E0-$E8 : trait de 0 à 8 pixels de large (voir "glyphs").
         .macro bar vnum, addr
         .local c, full, part, put
@@ -317,9 +318,14 @@ model:
         lda     vh,y
         lsr
         lsr
+        clc
+        adc     vh,y            ; longueur = vh * 1,25 (9 bits : retenue + A), 0-318 pixels
+        sta     tmp2
+        ror
         lsr
-        sta     tmp             ; cases pleines
-        lda     vh,y
+        lsr
+        sta     tmp             ; cases pleines (0-39)
+        lda     tmp2
         and     #7
         ora     #$E0
         sta     tmp2            ; case partielle
@@ -334,7 +340,7 @@ part:   lda     tmp2
 full:   lda     #$E8            ; trait complet
 put:    sta     addr,x
         inx
-        cpx     #32
+        cpx     #40
         bne     c
         .endmacro
 
@@ -455,9 +461,9 @@ logocolor:
         rts
 
 render:
-        bar     0, SCR2 + 14 * 40 + 3
-        bar     1, SCR2 + 15 * 40 + 3
-        bar     2, SCR2 + 16 * 40 + 3
+        bar     0, SCR2 + 14 * 40
+        bar     1, SCR2 + 15 * 40
+        bar     2, SCR2 + 16 * 40
         rts
 
 ; Passage à l'écran de lecture : jeu de caractères (ROM recopiée + traits), copie de l'écran
@@ -545,11 +551,11 @@ vis_start:
         sta     $D018
         lda     _vis_on         ; vu-mètres : dégradé arc-en-ciel (mémoire couleur)
         beq     @nov
-        ldx     #31
+        ldx     #39
 @vc:    lda     vucolors,x
-        sta     $D800 + 14 * 40 + 3,x
-        sta     $D800 + 15 * 40 + 3,x
-        sta     $D800 + 16 * 40 + 3,x
+        sta     $D800 + 14 * 40,x
+        sta     $D800 + 15 * 40,x
+        sta     $D800 + 16 * 40,x
         dex
         bpl     @vc
 @nov:   rts

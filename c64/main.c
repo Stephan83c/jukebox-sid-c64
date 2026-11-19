@@ -382,7 +382,7 @@ static void options(void)
     *(unsigned char *)(0xD800 + 24 * 40 + 39) = COLOR_GRAY2;
 }
 
-/* Zone d'effets : trois barres fines serrées (voix 1 à 3, sans étiquette, lignes 14 à 16, colonnes 3 à 34), dégradé vert / jaune / rouge. */
+/* Zone d'effets : trois barres fines serrées (voix 1 à 3, sans étiquette, lignes 14 à 16, colonnes 0 à 39), dégradé vert / jaune / rouge. */
 static void zone_effets(void)
 {
     unsigned char v, c, col;
@@ -392,9 +392,9 @@ static void zone_effets(void)
         return;
     }
     for (v = 0; v < 3; ++v) {
-        for (c = 0; c < 32; ++c) {
-            col = c < 18 ? COLOR_LIGHTGREEN : (c < 26 ? COLOR_YELLOW : COLOR_LIGHTRED);
-            *(unsigned char *)(0xD800 + (14 + v) * 40 + 3 + c) = col;
+        for (c = 0; c < 40; ++c) {
+            col = c < 22 ? COLOR_LIGHTGREEN : (c < 32 ? COLOR_YELLOW : COLOR_LIGHTRED);
+            *(unsigned char *)(0xD800 + (14 + v) * 40 + c) = col;
         }
     }
 }
