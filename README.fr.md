@@ -93,7 +93,7 @@ STATS           ->  STATS|compatibles|total
 erreur          ->  ERR|message
 ```
 
-Les clients antérieurs à la v1.5 envoient `RANDOM` simple : le serveur ne leur propose alors que des morceaux finissant avant `$A700`. Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`. Le motif cherche dans l'artiste ou le titre, sans tenir compte de la casse.
+Les clients antérieurs à la v1.5 envoient `RANDOM` simple : le serveur ne leur propose alors que des morceaux finissant avant `$A700`. Un client v1.5+ face à un serveur sans `RANDOM2` (réponse `ERR|commande inconnue`) repasse en `RANDOM` simple. Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`. Le motif cherche dans l'artiste ou le titre, sans tenir compte de la casse.
 
 ## Comment ça marche
 

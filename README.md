@@ -92,7 +92,7 @@ STATS             ->  STATS|compatible|total
 error             ->  ERR|message
 ```
 
-Clients before v1.5 send plain `RANDOM`: the server then only offers tunes ending before `$A700`. The last field is the scroller text (see above). Debuggable with `nc`. The pattern is searched in artist or
+Clients before v1.5 send plain `RANDOM`: the server then only offers tunes ending before `$A700`. A v1.5+ client talking to a server without `RANDOM2` (reply `ERR|commande inconnue`) falls back to plain `RANDOM`. The last field is the scroller text (see above). Debuggable with `nc`. The pattern is searched in artist or
 title, case-insensitively.
 
 ## How it works

@@ -102,7 +102,7 @@ de la zone résidente) et `jukebox.cfg` ont disparu. Essais préalables : `-Oirs
 Oscar64 libère environ 2 Ko (fin de l'image en `$C538` au lieu de `$CCFD` avec `HISTART=$A700`). Même comportement vérifié
 dans VICE (démo) et sur l'Ultimate (morceau reçu du serveur public, lecture). `HISTART` peut monter jusqu'à `$AF00`
 (`$B000` ne tient plus avec le titre agrandi ; 308 morceaux de plus après réindexation) mais le serveur servirait alors des morceaux
-qui écraseraient les clients `$A700` : il fallait que le client annonce sa limite, fait en v1.5 (commande `RANDOM2 <fin> [motif]`, le serveur filtre sur `end_addr` ; `RANDOM` simple reste limité à `$A6FF` pour les clients v1.3.x et v1.4). Les notes sur cc65 ci-dessus restent vraies pour l'historique (v1.3.3 et avant).
+qui écraseraient les clients `$A700` : il fallait que le client annonce sa limite, fait en v1.5 (commande `RANDOM2 <fin> [motif]`, le serveur filtre sur `end_addr` ; `RANDOM` simple reste limité à `$A6FF` pour les clients v1.3.x et v1.4 ; un client v1.5 face à un serveur plus ancien repasse en `RANDOM` simple, ce qui reste sûr puisque ces morceaux finissent avant `$A700`). Les notes sur cc65 ci-dessus restent vraies pour l'historique (v1.3.3 et avant).
 
 ## À faire / idées
 

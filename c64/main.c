@@ -34,6 +34,7 @@ static unsigned char chunk[128];
 static char filtre[31];          /* recherche en cours (ASCII majuscule), vide = tout */
 static unsigned char nfiltre;
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
+static unsigned char ancien;     /* serveur sans RANDOM2 (avant v1.5) : on envoie RANDOM, limité par le serveur à $A6FF */
 static char cmdr[48];
 static char hdr[340];   /* en-tête OK|... : titre, auteur, année, texte du scroller (170 au plus) */
 
@@ -185,8 +186,13 @@ static unsigned char recuperer(void)
     if (s < 0) {
         return 0;
     }
-    memcpy(cmdr, "RANDOM2 " LIMITE, 12);   /* limite : dernière adresse laissée aux morceaux (HISTART - 1, en hexadécimal) */
-    k = 12;
+    if (ancien) {
+        memcpy(cmdr, "RANDOM", 6);
+        k = 6;
+    } else {
+        memcpy(cmdr, "RANDOM2 " LIMITE, 12);   /* limite : dernière adresse laissée aux morceaux (HISTART - 1, en hexadécimal) */
+        k = 12;
+    }
     if (nfiltre) {
         cmdr[k++] = 32;
         memcpy(cmdr + k, filtre, nfiltre);
@@ -216,7 +222,11 @@ static unsigned char recuperer(void)
                 if (c == LF) {
                     hdr[hn] = 0;
                     if (hdr[0] == 'E') {
-                        aucun = 1;   /* ERR|aucun morceau */
+                        if (hdr[4] == 'c') {
+                            ancien = 1;   /* ERR|commande inconnue : serveur d'avant la v1.5, on réessaie avec RANDOM */
+                        } else {
+                            aucun = 1;    /* ERR|aucun morceau */
+                        }
                     }
                     if (!analyser()) {
                         n = -2;   /* réponse refusée, mais le socket est vivant */
