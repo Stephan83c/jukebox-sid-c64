@@ -10,6 +10,7 @@ The play screen: giant logo, title / artist / year, elapsed time, three VU meter
 rainbow gradient, a demo-style scroller whose text comes from the server, and the key legend.
 
 ![Play screen (VICE emulation)](docs/screenshot.png)
+
 *The play screen, captured in the VICE emulator (demo build): rainbow title, VU meters, server-driven scroller, version in the corner.*
 
 ```

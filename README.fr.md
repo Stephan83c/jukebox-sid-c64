@@ -10,7 +10,8 @@ L'écran de lecture : logo géant, titre / artiste / année, temps écoulé, tro
 SID, en dégradé arc-en-ciel), scroller de démo dont le texte vient du serveur, touches.
 
 ![Écran de lecture (émulateur VICE)](docs/screenshot.png)
-*L'écran de lecture, capturé dans l'émulateur VICE (version démo) : vu-mètres arc-en-ciel, scroller piloté par le serveur.*
+
+*L'écran de lecture, capturé dans l'émulateur VICE (version démo) : titre arc-en-ciel, vu-mètres, scroller piloté par le serveur, version dans le coin.*
 
 ```
  ┌────────────┐   texte, TCP :6474    ┌──────────────────────┐
