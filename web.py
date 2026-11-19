@@ -2,7 +2,7 @@
 """Page web pour changer le texte du scroller du jukebox.
 
 Règles : majuscules (forcées), alphabet du C64 (A-Z * . , ! ? - espace), 150 caractères au plus,
-une seule modification toutes les 3 minutes pour tout le monde (pause globale) et toutes les 10 minutes par IP. Le texte est écrit dans
+une seule modification toutes les 3 minutes pour tout le monde (pause globale) et toutes les 3 minutes par IP. Le texte est écrit dans
 scroll_user.txt ; server.py l'utilise pendant 1 heure, puis retombe sur scroll.txt (message par défaut).
 L'heure du dernier changement est la date du fichier : rien à mémoriser, ça survit aux redémarrages.
 
@@ -514,7 +514,7 @@ def main():
     ap.add_argument("--default-file", dest="default_file", type=Path, default=HERE / "scroll.txt")
     ap.add_argument("--history", type=Path, default=DATA / "web_changes.log")
     ap.add_argument("--cooldown", type=int, default=180, help="secondes entre deux changements (global)")
-    ap.add_argument("--ip-cooldown", dest="ip_cooldown", type=int, default=600,
+    ap.add_argument("--ip-cooldown", dest="ip_cooldown", type=int, default=180,
                     help="secondes entre deux changements de la même IP (IPv6 : même bloc /64)")
     ap.add_argument("--ttl", type=int, default=3600, help="secondes avant retour au message par défaut")
     ap.add_argument("--trust-proxy", action="store_true")
