@@ -7,6 +7,9 @@
 #endif
 
 #define BARRE 0x7C   /* '|' en ASCII : un littéral serait converti par cc65 */
+#ifndef LIMITE
+#define LIMITE "A6FF"   /* HISTART - 1 en hexadécimal (build.sh le calcule) */
+#endif
 #ifndef VIS_DEFAULT
 #define VIS_DEFAULT 1
 #endif
@@ -182,8 +185,8 @@ static unsigned char recuperer(void)
     if (s < 0) {
         return 0;
     }
-    memcpy(cmdr, "RANDOM", 6);
-    k = 6;
+    memcpy(cmdr, "RANDOM2 " LIMITE, 12);   /* limite : dernière adresse laissée aux morceaux (HISTART - 1, en hexadécimal) */
+    k = 12;
     if (nfiltre) {
         cmdr[k++] = 32;
         memcpy(cmdr + k, filtre, nfiltre);

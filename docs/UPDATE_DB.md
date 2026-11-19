@@ -28,12 +28,12 @@ archive: the indexer uses it for tune lengths.
 
 ```sh
 cp jukebox.db jukebox.db.bak                      # safety net
-python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA6FF
+python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xAEFF
 ```
 
 `--max-addr` must stay equal to `HISTART - 1` (`c64/Makefile`) and to `MEM_HAUT` (`c64/main.c`): above it is
 the C64 client's memory. The script prints how many tunes were kept and why the others were rejected (RSID,
-too big, multi-SID, CIA-timer driven…). With HVSC #85: about 44,555 playable tunes.
+too big, multi-SID, CIA-timer driven…). With HVSC #85: about 44,703 playable tunes. The server filters per client (`RANDOM2` sends the client's own limit, plain `RANDOM` means `$A6FF`), so the database may hold tunes that older clients never receive.
 
 ## 3. Upload to the server
 
@@ -65,7 +65,7 @@ python3 client_pc.py --host <server> --port 6474
 ## If the C64 client changes size
 
 A bigger client sits higher in memory: lower `HISTART` (`c64/Makefile`), `MEM_HAUT` (`c64/main.c`) and
-`--max-addr` together, then re-index; the catalogue loses a few tunes (see the table in `HISTORY.md`).
+`--max-addr` together, then re-index; the catalogue loses a few tunes (see the table in `HISTORY.md`). The client announces its limit (`RANDOM2`), so the server needs no change.
 
 ## Copyright
 

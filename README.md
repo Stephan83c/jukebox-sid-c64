@@ -32,7 +32,7 @@ the REST API and the *Command Interface* enabled. VICE is optional (hardware-fre
 
 ```sh
 # 1. the HVSC (download from https://hvsc.c64.org/), then index the playable tunes
-python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xA6FF
+python3 indexer.py /path/to/C64Music -o jukebox.db --max-addr 0xAEFF
 
 # 2. the server (port 6474)
 python3 server.py --root /path/to/C64Music
@@ -85,12 +85,14 @@ the server while playing).
 ```
 RANDOM [pattern]  ->  OK|id|size|seconds|frames/s|subtune|load|init|play|title|author|year|scroller\n
                       + <size> bytes of raw code (PSID header stripped)
+RANDOM2 <end> [pattern]  ->  same, <end> = last address the client leaves to tunes (HISTART - 1), 4 hex digits,
+                      e.g. AEFF: only tunes ending at or below it are offered (client v1.5+)
 GET <id>          ->  same, for a specific tune
 STATS             ->  STATS|compatible|total
 error             ->  ERR|message
 ```
 
-The last field is the scroller text (see above). Debuggable with `nc`. The pattern is searched in artist or
+Clients before v1.5 send plain `RANDOM`: the server then only offers tunes ending before `$A700`. The last field is the scroller text (see above). Debuggable with `nc`. The pattern is searched in artist or
 title, case-insensitively.
 
 ## How it works

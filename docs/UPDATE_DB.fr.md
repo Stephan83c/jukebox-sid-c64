@@ -30,12 +30,12 @@ de l'archive : l'indexeur s'en sert pour les durées.
 
 ```sh
 cp jukebox.db jukebox.db.bak                      # filet de sécurité
-python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA6FF
+python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xAEFF
 ```
 
 `--max-addr` doit rester égal à `HISTART - 1` (`c64/Makefile`) et à `MEM_HAUT` (`c64/main.c`) : au-dessus,
 c'est la mémoire du client C64. Le script affiche le nombre de morceaux retenus et les raisons de rejet
-(RSID, trop gros, multi-SID, cadencé par un timer CIA…). Avec la HVSC #85 : environ 44 503 morceaux jouables.
+(RSID, trop gros, multi-SID, cadencé par un timer CIA…). Avec la HVSC #85 : environ 44 703 morceaux jouables. Le serveur filtre par client (`RANDOM2` envoie la limite du client, `RANDOM` simple vaut `$A6FF`) : la base peut donc contenir des morceaux que les anciens clients ne reçoivent jamais.
 
 ## 3. Envoyer sur le serveur
 
@@ -68,7 +68,7 @@ python3 client_pc.py --host <serveur> --port 6474
 
 Un client plus gros monte plus haut en mémoire : il faut alors baisser `HISTART` (`c64/Makefile`),
 `MEM_HAUT` (`c64/main.c`) et `--max-addr` ensemble, puis réindexer ; le catalogue perd quelques morceaux
-(voir le tableau de `HISTORY.md`).
+(voir le tableau de `HISTORY.md`). Le client annonce sa limite (`RANDOM2`) : le serveur n'a rien à changer.
 
 ## Droits d'auteur
 

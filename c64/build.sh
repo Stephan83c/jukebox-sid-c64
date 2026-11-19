@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 mkdir -p build
 OSC=${OSC:-oscar64}
 OSCINC=${OSCINC:-$(dirname "$(command -v "$OSC")")/../include}
-VERSION=${VERSION:-1.4}
+VERSION=${VERSION:-1.5}
 IP=${SERVEUR_IP:-boombass.net}; PORT=${SERVEUR_PORT:-6474}; MAXS=${MAX_SECS:-1000}; VIS=${VIS:-1}
 if [ "$1" = demo ]; then
   RUN=$((0x9800)); DEF="-DDEMO"; OUT=build/demo.prg     # le morceau intégré (demo.bin) occupe le bas de la mémoire
@@ -31,10 +31,11 @@ ld65 -C asm.cfg -D __HISTART__=$RUN -o build/asm.bin -Ln build/asm.lbl build/pla
 } > build/asmsyms.h
 
 # 3. partie C : deux passes, la première donne la taille exacte de l'image à recopier (IMGEND)
+LIMITE=$(printf '%04X' $((RUN - 1)))
 IMG=0x2000
 for pass in 1 2; do
   $OSC -Os -tf=prg -i=$OSCINC -i=build -i=. -o=$OUT -DRUN=$RUN -DIMGEND=$IMG $DEF \
-     -DSERVEUR_IP="\"$IP\"" -DSERVEUR_PORT=$PORT -DMAX_SECS=$MAXS -DVIS_DEFAULT=$VIS -DVERSION="\"$VERSION\"" client.c > build/oscar.log 2>&1 \
+     -DSERVEUR_IP="\"$IP\"" -DSERVEUR_PORT=$PORT -DMAX_SECS=$MAXS -DVIS_DEFAULT=$VIS -DVERSION="\"$VERSION\"" -DLIMITE="\"$LIMITE\"" client.c > build/oscar.log 2>&1 \
      || { cat build/oscar.log; exit 1; }
   if [ $pass = 1 ]; then
     IMG=$(awk '/^regions/{f=1} f && /, main$/{gsub(",","",$5); print "0x"$5; exit}' ${OUT%.prg}.map)

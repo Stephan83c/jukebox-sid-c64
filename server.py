@@ -5,6 +5,10 @@ Protocole texte (une commande par ligne, réponses terminées par \\n) :
     RANDOM [motif]   -> OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année|scroller\\n
                         + <taille> octets de code brut (sans en-tête PSID), à copier à l'adresse de chargement
                         (motif : sous-chaîne cherchée dans l'auteur ou le titre, sans tenir compte de la casse)
+                        Clients anciens (v1.3.x, v1.4) : seuls les morceaux finissant avant $A700 sont proposés.
+    RANDOM2 <fin> [motif]  -> idem, mais <fin> (4 chiffres hexadécimaux, ex. AEFF) est la dernière adresse que le
+                        client laisse aux morceaux (HISTART - 1) : seuls les morceaux qui finissent au plus tard
+                        à cette adresse sont proposés (client v1.5 et suivants).
     GET <id>         -> idem pour un morceau précis
     STATS            -> STATS|compatibles|total\\n
     QUIT             -> ferme la connexion
@@ -27,6 +31,8 @@ REQ_WINDOW, REQ_MAX = 60, 30      # commandes par IP et par minute
 FIRST_LINE_TIMEOUT = 20  # secondes pour envoyer la première commande (sinon on coupe)
 IDLE_TIMEOUT = 300       # secondes d'attente entre deux commandes (un C64 reste connecté pendant un morceau)
 MAX_LINE = 1024          # taille maximale d'une commande
+LEGACY_MAX_ADDR = 0xA6FF  # fin de zone des clients qui envoient RANDOM sans limite (HISTART $A700)
+MIN_MAX_ADDR = 0x0900     # limite minimale acceptée pour RANDOM2 (en dessous, rien ne tient)
 
 
 def ipkey(ip: str) -> str:
@@ -114,15 +120,15 @@ class Jukebox:
             self.reqs = {k: v for k, v in self.reqs.items() if v and now - v[-1] < REQ_WINDOW}
         return len(h) <= REQ_MAX
 
-    def pick(self, pattern: str | None = None):
+    def pick(self, pattern: str | None = None, max_addr: int = LEGACY_MAX_ADDR):
         if pattern:
             esc = pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             like = f"%{esc}%"
             return self.con.execute(
-                "SELECT * FROM tunes WHERE compatible=1 AND (author LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')"
-                " ORDER BY RANDOM() LIMIT 1", (like, like)).fetchone()
+                "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? AND (author LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')"
+                " ORDER BY RANDOM() LIMIT 1", (max_addr, like, like)).fetchone()
         return self.con.execute(
-            "SELECT * FROM tunes WHERE compatible=1 ORDER BY RANDOM() LIMIT 1").fetchone()
+            "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? ORDER BY RANDOM() LIMIT 1", (max_addr,)).fetchone()
 
     def get(self, tune_id: int):
         return self.con.execute("SELECT * FROM tunes WHERE id=? AND compatible=1", (tune_id,)).fetchone()
@@ -185,6 +191,15 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
                 if row:
                     log.info("%s RANDOM %r -> %s", peer, arg, row["path"])
                 await send_tune(w, jb, row, jb.scroll)
+            elif cmd == "RANDOM2":
+                lim, _, pat = arg.partition(" ")
+                if len(lim) != 4 or any(c not in "0123456789abcdefABCDEF" for c in lim) or int(lim, 16) < MIN_MAX_ADDR:
+                    w.write(b"ERR|limite invalide\n")
+                else:
+                    row = jb.pick(pat.strip()[:40] or None, int(lim, 16))
+                    if row:
+                        log.info("%s RANDOM2 %s %r -> %s", peer, lim.upper(), pat.strip(), row["path"])
+                    await send_tune(w, jb, row, jb.scroll)
             elif cmd == "GET" and arg.isdigit():
                 await send_tune(w, jb, jb.get(int(arg)), jb.scroll)
             elif cmd == "STATS":

@@ -64,6 +64,7 @@ Plus le client est gros, plus il monte dans la mémoire et moins il reste de pla
 | `$AC00` | 44 671 | scroller 8 pixels |
 | `$A900` | 44 555 | scroller 12 pixels |
 | `$A700` | 44 503 | 13 glyphes de plus au scroller (`/` `'` `:` `0-9`) |
+| `$AF00` | 44 703 | v1.5 : client réécrit avec Oscar64 (titre et scroller agrandis, version) ; ajout au tri des 108 « unpacker » (rejetés) |
 
 Motifs de rejet (version actuelle) : plage mémoire incompatible, morceaux cadencés par un timer CIA,
 RSID, trop gros (> 16 Ko), multi-SID, sans routine de lecture, **décompresseur au démarrage** (voir plus bas).
@@ -99,9 +100,9 @@ Le client C est passé de cc65 à **Oscar64**, sans changer le lecteur (`play.s`
 l'image que le copieur du démarrage recopie de `$0900` vers `HISTART`). `boot.s`, `stack.s` (la pile d'Oscar64 est en haut
 de la zone résidente) et `jukebox.cfg` ont disparu. Essais préalables : `-Oirs -Cl` de cc65 et llvm-mos ne gagnaient rien ;
 Oscar64 libère environ 2 Ko (fin de l'image en `$C538` au lieu de `$CCFD` avec `HISTART=$A700`). Même comportement vérifié
-dans VICE (démo) et sur l'Ultimate (morceau reçu du serveur public, lecture). `HISTART` pourrait monter jusqu'à `$B000`
-(environ 460 morceaux de plus) mais le serveur servirait alors des morceaux qui écraseraient les clients `$A700` : il faudrait
-que le client annonce sa limite. Les notes sur cc65 ci-dessus restent vraies pour l'historique (v1.3.3 et avant).
+dans VICE (démo) et sur l'Ultimate (morceau reçu du serveur public, lecture). `HISTART` peut monter jusqu'à `$AF00`
+(`$B000` ne tient plus avec le titre agrandi ; 308 morceaux de plus après réindexation) mais le serveur servirait alors des morceaux
+qui écraseraient les clients `$A700` : il fallait que le client annonce sa limite, fait en v1.5 (commande `RANDOM2 <fin> [motif]`, le serveur filtre sur `end_addr` ; `RANDOM` simple reste limité à `$A6FF` pour les clients v1.3.x et v1.4). Les notes sur cc65 ci-dessus restent vraies pour l'historique (v1.3.3 et avant).
 
 ## À faire / idées
 

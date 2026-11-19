@@ -32,7 +32,7 @@ avec l'API REST et la *Command Interface* activées. VICE est facultatif (tests 
 
 ```sh
 # 1. la HVSC (à télécharger sur https://hvsc.c64.org/) puis l'index des morceaux jouables
-python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xA6FF
+python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xAEFF
 
 # 2. le serveur (port 6474)
 python3 server.py --root /chemin/vers/C64Music
@@ -85,12 +85,15 @@ contacte pas le serveur pendant la lecture).
 ```
 RANDOM [motif]  ->  OK|id|taille|secondes|images/s|sous-morceau|chargement|init|play|titre|auteur|année|scroller\n
                     + <taille> octets de code brut (sans en-tête PSID)
+RANDOM2 <fin> [motif]  ->  idem ; <fin> = dernière adresse laissée aux morceaux par le client (HISTART - 1), 4 chiffres
+                    hexadécimaux, ex. AEFF : seuls les morceaux qui finissent au plus tard à cette adresse sont
+                    proposés (client v1.5+)
 GET <id>        ->  idem pour un morceau précis
 STATS           ->  STATS|compatibles|total
 erreur          ->  ERR|message
 ```
 
-Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`. Le motif cherche dans l'artiste ou le titre, sans tenir compte de la casse.
+Les clients antérieurs à la v1.5 envoient `RANDOM` simple : le serveur ne leur propose alors que des morceaux finissant avant `$A700`. Le dernier champ est le texte du scroller (voir plus bas). Débogable avec `nc`. Le motif cherche dans l'artiste ou le titre, sans tenir compte de la casse.
 
 ## Comment ça marche
 
