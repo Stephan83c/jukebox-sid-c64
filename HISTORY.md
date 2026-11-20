@@ -128,6 +128,13 @@ qui écraseraient les clients `$A700` : il fallait que le client annonce sa limi
 
 ## À faire / idées
 
+- **Lecteur indifférent au NTSC/PAL** (demandé par un utilisateur américain sur Reddit, 2026-11-20 : sur son Ultimate réglé en NTSC,
+  les morceaux PAL vont environ 20 % trop vite ; il a dû repasser en PAL). Cause : le lecteur appelle le morceau une fois par
+  image vidéo (`play.s`, interruption raster), donc à 60 Hz sur une machine NTSC ; comme sur un vrai C64, c'est « normal ». Piste
+  pour le tempo : appeler le morceau à sa propre cadence (50 ou 60 Hz, que le serveur envoie déjà) en sautant 1 image sur 6 en
+  NTSC, ou en ajoutant un appel de temps en temps en PAL. La hauteur (horloge du SID, environ 3,8 % d'écart) est une étape à part :
+  il faudrait recalculer les fréquences écrites au SID. **À ne pas commencer avant que la v1.6 ait fait ses preuves** (décision du
+  2026-11-20). Réponse faite à l'utilisateur : PAL pour l'instant, « peut-être une version future ».
 - **Changer l'adresse et le port du serveur** sans recompiler : aujourd'hui `SERVEUR_IP` et `SERVEUR_PORT`
   sont fixés dans le `Makefile` à la compilation (valeurs actuelles : `boombass.net`, `6474`). Piste : champ
   modifiable au clavier, comme dans *Belote LAN C64* (touche F3).
