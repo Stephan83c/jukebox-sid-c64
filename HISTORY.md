@@ -74,6 +74,15 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
 - Premiers utilisateurs extérieurs le 2026-11-20 : 3 adresses IP distinctes en trois jours dans le journal du service, dont deux
   autres que celle du développeur (47 connexions).
 
+## Limite de débit : les refus ne comptent plus (2026-11-20)
+
+- Constaté lors d'un test de charge (50 connexions depuis une IP) : `req_ok` notait la requête avant de la tester, donc un
+  client bloqué qui insistait prolongeait son blocage (la fenêtre de 60 s ne se vidait jamais, retour à la normale ~2 min).
+  Maintenant seules les requêtes acceptées sont notées (30/min/IP inchangé). Vérifié en local ; à déployer sur le VPS
+  (`git pull` + `systemctl --user restart jukebox`, hors lecture d'un C64).
+- Test de charge du 2026-11-20 : 4 connexions simultanées OK ; 50 simultanées depuis une IP : 8 servies, 42 refusées
+  (`MAX_CONN_IP`, fermeture sans message) ; 50 étalées sur 25-50 s : environ 15 servies (2 commandes par connexion avec QUIT).
+
 ## Le catalogue selon la place prise par le client
 
 Plus le client est gros, plus il monte dans la mémoire et moins il reste de place pour les morceaux.

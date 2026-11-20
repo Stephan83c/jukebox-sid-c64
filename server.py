@@ -114,11 +114,13 @@ class Jukebox:
     def req_ok(self, ip: str) -> bool:
         now = time.time()
         h = [t for t in self.reqs.get(ip, []) if now - t < REQ_WINDOW]
-        h.append(now)
         self.reqs[ip] = h
         if len(self.reqs) > 5000:
             self.reqs = {k: v for k, v in self.reqs.items() if v and now - v[-1] < REQ_WINDOW}
-        return len(h) <= REQ_MAX
+        if len(h) >= REQ_MAX:
+            return False        # un refus n'est pas noté : le blocage ne se prolonge pas si le client insiste
+        h.append(now)
+        return True
 
     def pick(self, pattern: str | None = None, max_addr: int = LEGACY_MAX_ADDR):
         if pattern:
