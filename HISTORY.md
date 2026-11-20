@@ -62,7 +62,7 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
 - **Recherche sans résultat plus lisible.** Avant : un message rouge de 2 s, puis `SEARCH: ALL` sans explication (testé avec
   « momo » : le seul morceau correspondant est marqué incompatible, donc jamais proposé). Maintenant : `NO MATCH: <texte>` en
   rouge et `PLAYING ANY TUNE INSTEAD` pendant environ 5 s, puis `SEARCH: ALL (NO MATCH)` sur le morceau suivant (+112 octets,
-  client à 8 425 octets, image `$AF00-$CEE8`). Non testé en VICE (la version démo n'a pas de réseau) ; à vérifier sur l'Ultimate.
+  client à 8 425 octets, image `$AF00-$CEE8`). Vérifié sur l'Ultimate le 2026-11-20 (recherches « momo » : sans résultat, et « hubbard » : avec résultat) ; non testable en VICE, la version démo n'ayant pas de réseau.
 - **Page web sans numéro de port** : `https://sidbox.boombass.net` (alias DNS vers le VPS + Caddy en reverse proxy, certificat
   Let's Encrypt renouvelé seul). Le jukebox TCP (6474) ne change pas. Détails dans `BaseC64/fiches/reseau-protocole.md`.
 - **Port 6475 fermé de l'extérieur** : `web.py --host 127.0.0.1 --trust-proxy` (l'IP des visiteurs vient de `X-Forwarded-For`,
