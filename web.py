@@ -214,7 +214,7 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 <h1>@@title@@</h1>
 <div class="row"><span class="lab">@@lab_text@@</span> <span class="val">@@source@@</span></div>
 <div class="row"><span class="lab">@@lab_next@@</span> <span class="val" id="nx" data-w="@@wait@@" data-now="@@now@@">@@next@@</span></div>
-<div class="row"><span class="lab">@@lab_reset@@</span> <span class="val">@@reset@@</span></div>
+<div class="row"><span class="lab">@@lab_reset@@</span> <span class="val" id="rs" data-w="@@left@@">@@reset@@</span></div>
 <div class="sp"></div>
 <div class="bar"></div><div class="bar"></div><div class="bar"></div>
 <div class="scr" aria-label="@@current_plain@@" style="--d:@@dur@@s"><span class="run" aria-hidden="true">@@current@@</span></div>
@@ -243,6 +243,11 @@ function tick(){var r=Math.ceil((end-Date.now())/1000);
 if(r<=0){nx.textContent=nx.dataset.now;b.disabled=false;return}
 nx.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(tick,250)}
 if(w>0)tick();
+var rs=document.getElementById('rs'),lw=parseFloat(rs.dataset.w)||0,le=Date.now()+lw*1000;
+function rt(){var r=Math.ceil((le-Date.now())/1000);
+if(r<=0){rs.textContent='-';return}
+rs.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(rt,250)}
+if(lw>0)rt();
 </script></body></html>
 """
 
@@ -389,6 +394,7 @@ def render(st: State, ip: str, lang: str, message: str = "", ok: bool = False, v
         "next": fmt(wait_s) if wait_s else T["now"], "now": T["now"],
         "wait": "%.1f" % wait_s,
         "reset": fmt(left) if left > 0 else "-",
+        "left": "%.1f" % max(0.0, left),
         "current": rainbow(cur or " ", 3),
         "current_plain": html.escape(cur, quote=True),
         "dur": str(max(12, int(len(cur) * 0.28))),
