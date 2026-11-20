@@ -33,6 +33,8 @@ static char d_scroll[] = "          SID JUKEBOX  ***  A SID RADIO FOR THE COMMOD
 static unsigned char chunk[128];
 static char filtre[31];          /* recherche en cours (ASCII majuscule), vide = tout */
 static unsigned char nfiltre;
+static unsigned char boucle;     /* 1 = on rejoue le même morceau à la fin */
+static unsigned char rejouer;    /* 1 = on rejoue le morceau déjà en mémoire, sans le redemander au serveur */
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
 static unsigned char ancien;     /* serveur sans RANDOM2 (avant v1.5) : on envoie RANDOM, limité par le serveur à $A6FF */
 static char cmdr[48];
@@ -269,7 +271,17 @@ static void saisir(void)
     unsigned char c, n = 0;
     char buf[sizeof(filtre)];
 
-    while (*(volatile unsigned char *)0xCB != 64) {   /* attendre le relâchement de S */
+    /* Le lecteur lit le clavier lui-même : le KERNAL ne balaie pas pendant le morceau, donc $CB est
+       périmé et S, encore enfoncée, finirait dans le tampon. On attend le relâchement réel en lisant
+       la matrice (CIA1, colonne 1, ligne 5), sans dépendre de l'IRQ ; 50 lectures de suite = stable. */
+    for (c = 0; c < 50;) {
+        unsigned char v;
+        __asm { sei };
+        *(volatile unsigned char *)0xDC00 = 0xFD;
+        v = *(volatile unsigned char *)0xDC01;
+        *(volatile unsigned char *)0xDC00 = 0xFF;
+        __asm { cli };
+        c = (v & 0x20) ? c + 1 : 0;
     }
     *(volatile unsigned char *)0xC6 = 0;              /* vider le tampon clavier */
     memset((unsigned char *)(0x0400 + 13 * 40), 32, 8 * 40);   /* efface la zone d'effets */
@@ -366,25 +378,23 @@ static void message(unsigned char row, const char *txt, unsigned char couleur)
 }
 
 /* Ligne des touches : 40 colonnes pile (touche en blanc, action en gris, deux espaces entre les groupes). */
-static void touche(const char *k, const char *action)
+static void touche(const char *k, const char *action, unsigned char couleur)
 {
     textcolor(COLOR_WHITE);
     cputs(k);
-    textcolor(COLOR_GRAY2);
+    textcolor(couleur);
     cputs(action);
 }
 
+/* Ligne des touches, centrée (39 colonnes sur 40) ; LOOP et VIS en vert quand ils sont actifs, en gris sinon. */
 static void options(void)
 {
     gotoxy(0, 24);
-    touche("SPC", "=NEXT  ");
-    touche("S", "=FIND  ");
-    touche("C", "=CLEAR  ");
-    touche("V", "=VIS  ");
-    touche("Q", "=QUI");
-    /* dernière case de l'écran : écrite directement, sinon le curseur ferait défiler l'écran */
-    *(unsigned char *)(0x0400 + 24 * 40 + 39) = 20;           /* T */
-    *(unsigned char *)(0xD800 + 24 * 40 + 39) = COLOR_GRAY2;
+    touche("SPC", "=NEXT  ", COLOR_GRAY2);
+    touche("S", "=FIND  ", COLOR_GRAY2);
+    touche("L", "=LOOP  ", boucle ? COLOR_LIGHTGREEN : COLOR_GRAY2);
+    touche("V", "=VIS  ", vis_on ? COLOR_LIGHTGREEN : COLOR_GRAY2);
+    touche("Q", "=QUIT", COLOR_GRAY2);
 }
 
 /* Zone d'effets : trois barres fines serrées (voix 1 à 3, sans étiquette, lignes 14 à 16, colonnes 0 à 39), dégradé vert / jaune / rouge. */
@@ -438,7 +448,7 @@ void jukebox(void)
 #endif
     for (;;) {
         message(3, "CONNECTING...", COLOR_WHITE);
-        if (!recuperer()) {
+        if (!rejouer && !recuperer()) {
             if (aucun) {
                 message(3, "NO MATCH, PLAYING ANY...", COLOR_LIGHTRED);
                 nfiltre = 0;
@@ -454,34 +464,37 @@ void jukebox(void)
             continue;
         }
         ecran();
-        champ_ligne(4, "TITLE: ", COLOR_YELLOW, t_title, 33);
-        champ_ligne(5, "ARTIST: ", COLOR_WHITE, t_author, 32);
-        champ_ligne(6, "RELEASED: ", COLOR_WHITE, t_released, 30);
+        champ_ligne(5, "TITLE: ", COLOR_YELLOW, t_title, 33);
+        champ_ligne(6, "ARTIST: ", COLOR_WHITE, t_author, 32);
+        champ_ligne(7, "RELEASED: ", COLOR_WHITE, t_released, 30);
         fps = t_fps == 60 ? 60 : 50;   /* cadence du morceau, pas celle de la machine */
         secs = t_secs > MAX_SECS ? MAX_SECS : t_secs;
         frames_max = secs * fps;
-        debut(9);
+        debut(10);
         textcolor(COLOR_LIGHTBLUE);
         cputs("TIME: ");
         textcolor(COLOR_WHITE);
-        cputs("00:00 / ");     /* le lecteur met à jour ces 5 chiffres (colonne 6, ligne 9) */
+        cputs("00:00 / ");     /* le lecteur met à jour ces 5 chiffres (colonne 6, ligne 10) */
         duree(secs);
         if (nfiltre) {
-            champ_ligne(10, "FILTER: ", COLOR_WHITE, filtre, nfiltre);
+            champ_ligne(11, "FILTER: ", COLOR_WHITE, filtre, nfiltre);
         } else {
-            champ_ligne(10, "FILTER: ", COLOR_WHITE, "ALL", 3);
+            champ_ligne(11, "FILTER: ", COLOR_WHITE, "ALL", 3);
         }
-        champ_ligne(11, "EFFECTS: ", COLOR_WHITE, vis_on ? "ON" : "OFF", 3);
         zone_effets();
         options();
         r = play_run();
         if (r == 2) {
             break;
         }
-        if (r == 3) {
+        rejouer = 0;
+        if (r == 0) {
+            rejouer = boucle;      /* fin du morceau : on le rejoue si la boucle est active */
+        } else if (r == 3) {
             saisir();
         } else if (r == 4) {
-            nfiltre = 0;
+            boucle = !boucle;      /* le lecteur s'arrête pour le prendre en compte : on repart du même morceau */
+            rejouer = 1;
         } else if (r == 5) {
             vis_on = !vis_on;   /* effets on/off : pris en compte au morceau suivant */
         }

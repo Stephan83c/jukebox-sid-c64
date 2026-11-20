@@ -232,7 +232,7 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </form>
 <p class="help">@@help@@</p>
 @@about@@
-<div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; C=CLEAR &nbsp; V=VIS &nbsp; Q=QUIT</div>
+<div class="row keys">SPC=NEXT &nbsp; S=FIND &nbsp; L=LOOP &nbsp; V=VIS &nbsp; Q=QUIT</div>
 </main>
 <script>
 var t=document.getElementById('t'),n=document.getElementById('n');
@@ -266,8 +266,8 @@ un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette pa
 <h2>LES TOUCHES</h2>
 <ul>
 <li><code>ESPACE</code> morceau suivant</li>
-<li><code>S</code> recherche par artiste ou titre (RETURN valide, RUN/STOP annule)</li>
-<li><code>C</code> efface la recherche &nbsp; <code>V</code> vu-mètres on/off &nbsp; <code>Q</code> retour au BASIC</li>
+<li><code>S</code> recherche par artiste ou titre (RETURN valide, RUN/STOP annule, RETURN seul efface la recherche)</li>
+<li><code>L</code> boucle on/off : rejoue le même morceau à la fin (la touche s'allume en vert) &nbsp; <code>V</code> vu-mètres on/off (vert aussi) &nbsp; <code>Q</code> retour au BASIC</li>
 </ul>
 <p>Le code source (serveur Python et client C) est sur
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
@@ -295,8 +295,8 @@ and a scroller. <b>The scroller text is the one you change on this page.</b></p>
 <h2>KEYS</h2>
 <ul>
 <li><code>SPACE</code> next tune</li>
-<li><code>S</code> search by artist or title (RETURN confirms, RUN/STOP cancels)</li>
-<li><code>C</code> clears the search &nbsp; <code>V</code> level meters on/off &nbsp; <code>Q</code> back to BASIC</li>
+<li><code>S</code> search by artist or title (RETURN confirms, RUN/STOP cancels, empty RETURN clears the search)</li>
+<li><code>L</code> loop on/off: replays the same tune when it ends (the key turns green) &nbsp; <code>V</code> level meters on/off (green too) &nbsp; <code>Q</code> back to BASIC</li>
 </ul>
 <p>The source code (Python server and C client) is on
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.

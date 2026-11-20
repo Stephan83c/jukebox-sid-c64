@@ -75,8 +75,8 @@ the server while playing).
 | Key | Effect |
 |---|---|
 | `SPACE` | next tune |
-| `S` | search by artist or title (RETURN confirms, RUN/STOP cancels, empty RETURN = everything) |
-| `C` | clear the filter |
+| `S` | search by artist or title (RETURN confirms, RUN/STOP cancels, empty RETURN = everything, i.e. clears the filter) |
+| `L` | loop on/off: replays the same tune when it ends (the tune restarts when you toggle it; replayed from memory, no network) |
 | `V` | VU meters on/off (takes effect on the next tune) |
 | `Q` | quit (back to BASIC) |
 

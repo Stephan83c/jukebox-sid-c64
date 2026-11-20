@@ -30,7 +30,7 @@
         .import logo_glyphs, logo_row0, logo_row1, logo_row2, scr_glyphs, scrtext
 
 
-TIME_OFS   = 9 * 40 + 6             ; position du temps écoulé (ligne 9, colonne 6)
+TIME_OFS   = 10 * 40 + 6            ; position du temps écoulé (ligne 10, colonne 6)
 LOGO_ROW   = 0                      ; le logo occupe les lignes 0 à 2
 LOGO_COL   = 9                      ; première colonne du logo (11 lettres x 2 colonnes)
 LOGO_LEN   = 480                    ; octets de formes du logo (10 lettres x 6 caractères x 8) : 320 en $80-$A7, 160 en $C2-$D5
@@ -104,7 +104,7 @@ vucolors:
 
         .code
 
-; Lit le clavier : A = 0 rien, 1 ESPACE, 2 Q, 3 S, 4 C, 5 V.
+; Lit le clavier : A = 0 rien, 1 ESPACE, 2 Q, 3 S, 4 C, 5 V (4 = L, boucle).
 keys:
         lda     #$7F            ; colonne 7 : ESPACE (ligne 4), Q (ligne 6)
         sta     $DC00
@@ -120,10 +120,10 @@ keys:
         lda     $DC01
         and     #$20
         beq     @s
-        lda     #$FB            ; colonne 2 : C (ligne 4)
+        lda     #$DF            ; colonne 5 : L (ligne 2)
         sta     $DC00
         lda     $DC01
-        and     #$10
+        and     #$04
         beq     @c
         lda     #$F7            ; colonne 3 : V (ligne 7)
         sta     $DC00
