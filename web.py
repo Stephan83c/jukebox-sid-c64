@@ -370,6 +370,10 @@ def rainbow(text: str, shift: int = 0) -> str:
     return "".join(out)
 
 
+FLASH: dict = {}                 # ip -> (message, ok, valeur, instant) : résultat du dernier POST, lu une fois
+FLASH_LOCK = threading.Lock()
+
+
 def render(st: State, ip: str, lang: str, message: str = "", ok: bool = False, value: str = "") -> bytes:
     T = TEXTS[lang]
     cur, from_user = st.current()
@@ -467,7 +471,29 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.split("?")[0] != "/":
             return self.reply(404, b"not found", "text/plain; charset=utf-8")
         q = parse_qs(urlsplit(self.path).query).get("lang", [""])[0]
-        self.reply(200, render(self.st, self.ip(), pick_lang(q, self.headers.get("Accept-Language"))))
+        ip = self.ip()
+        with FLASH_LOCK:
+            fl = FLASH.pop(ip, None)
+        if fl and time.time() - fl[3] < 60:
+            body = render(self.st, ip, pick_lang(q, self.headers.get("Accept-Language")), fl[0], fl[1], fl[2])
+        else:
+            body = render(self.st, ip, pick_lang(q, self.headers.get("Accept-Language")))
+        self.reply(200, body)
+
+    def flash(self, ip, lang, message, ok=False, value=""):
+        """Post/Redirect/Get : le résultat est gardé côté serveur (une seule lecture) et le navigateur est
+        renvoyé sur la page par un 303, pour qu'un rechargement ne renvoie pas le formulaire."""
+        now = time.time()
+        with FLASH_LOCK:
+            for k in [k for k, v in FLASH.items() if now - v[3] > 60]:
+                del FLASH[k]
+            if len(FLASH) < 1000:
+                FLASH[ip] = (message, ok, value, now)
+        self.send_response(303)
+        self.send_header("Location", "/?lang=" + lang)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
 
     def do_POST(self):
         if not self.gate():
@@ -487,25 +513,24 @@ class Handler(BaseHTTPRequestHandler):
         m = MSG[lang]
         if get("site") or not st.token_ok(get("k")):
             log.info("%s refusé (robot ou formulaire trop rapide/périmé)", ip)
-            return self.reply(200, render(st, ip, lang, m["expired"]))
+            return self.flash(ip, lang, m["expired"])
         txt, err = check_text(st, get("t"), lang)
         if txt is None:
-            return self.reply(200, render(st, ip, lang, err, value=get("t")[:SCROLL_MAX * 2]))
+            return self.flash(ip, lang, err, value=get("t")[:SCROLL_MAX * 2])
         with st.lock:                       # la pause est vérifiée et armée sous le même verrou
             last = st.last_change()
             wait = st.a.cooldown - (time.time() - last) if last else 0
             if wait > 0:
-                return self.reply(200, render(st, ip, lang, m["early"] % fmt(wait),
-                                              value=txt))
+                return self.flash(ip, lang, m["early"] % fmt(wait), value=txt)
             wait = st.ip_wait(ip)
             if wait > 0:
-                return self.reply(200, render(st, ip, lang, m["ip_early"] % fmt(wait), value=txt))
+                return self.flash(ip, lang, m["ip_early"] % fmt(wait), value=txt)
             write_atomic(st.a.user_file, txt)
             st.mark(ip)
         with open(st.a.history, "a", encoding="utf-8") as f:
             f.write(json.dumps({"t": time.strftime("%Y-%m-%d %H:%M:%S"), "ip": ip, "text": txt}) + "\n")
         log.info("%s nouveau texte : %s", ip, txt)
-        self.reply(200, render(st, ip, lang, m["saved"], ok=True))
+        self.flash(ip, lang, m["saved"], ok=True)
 
 
 def main():
