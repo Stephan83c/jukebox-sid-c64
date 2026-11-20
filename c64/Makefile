@@ -38,7 +38,9 @@ REPO ?= Stephan83c/jukebox-sid-c64
 release: $(PRG)
 	@test -n "$(TAG)" || { echo "usage: make release TAG=vX.Y"; exit 1; }
 	cp $(PRG) build/jukebox-sid.prg
-	gh release upload $(TAG) build/jukebox-sid.prg --clobber -R $(REPO)
+	rm -f build/jukebox-sid-$(TAG).zip
+	zip -j build/jukebox-sid-$(TAG).zip build/jukebox-sid.prg README.txt
+	gh release upload $(TAG) build/jukebox-sid-$(TAG).zip --clobber -R $(REPO)
 
 clean:
 	rm -rf build *.o
