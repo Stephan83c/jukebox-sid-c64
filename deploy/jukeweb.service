@@ -1,11 +1,13 @@
 # Page web du scroller. Droits minimaux : écrit seulement dans ~/jukebox/data, ne voit ni la base ni les morceaux.
+# Derrière un reverse proxy (Caddy) : écoute en local seulement, l'IP réelle vient de X-Forwarded-For.
+# Sans proxy, retirer --host 127.0.0.1 --trust-proxy.
 # Installation : cp deploy/jukeweb.service ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now jukeweb
 [Unit]
 Description=Page web du scroller jukebox
 
 [Service]
 WorkingDirectory=%h/jukebox
-ExecStart=/usr/bin/python3 %h/jukebox/web.py --port 6475
+ExecStart=/usr/bin/python3 %h/jukebox/web.py --port 6475 --host 127.0.0.1 --trust-proxy
 Restart=on-failure
 
 # système de fichiers : tout en lecture seule sauf data/ ; le reste du compte est caché

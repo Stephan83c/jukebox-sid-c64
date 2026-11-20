@@ -75,7 +75,7 @@ contacte pas le serveur pendant la lecture).
 | Touche | Effet |
 |---|---|
 | `SPACE` | morceau suivant |
-| `S` | recherche par artiste ou titre (RETURN valide, RUN/STOP annule, RETURN seul = tout, donc efface le filtre) |
+| `S` | recherche par artiste ou titre : les morceaux suivants sont tirés au hasard parmi les résultats (RETURN valide, RUN/STOP annule, RETURN seul = tout, donc efface la recherche ; rien trouvé : `NO MATCH` puis un morceau au hasard) |
 | `L` | boucle on/off : rejoue le même morceau à la fin (le morceau repart quand on la change) |
 | `V` | vu-mètres on/off (pris en compte au morceau suivant) |
 | `Q` | quitte (retour au BASIC) |

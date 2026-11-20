@@ -52,6 +52,28 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
    Marge restante : 7 octets.
 
+## v1.6 : SEARCH, adresse sans port, port 6475 fermé (2026-11-20)
+
+- **S=FIND devient S=SEARCH.** Une remarque sur Reddit : « FIND » laisse croire qu'on obtient une liste de morceaux, alors que
+  la touche *filtre le tirage aléatoire* (les morceaux suivants sont tirés au hasard parmi ceux dont l'artiste ou le titre
+  contient le texte). Libellé corrigé sur la page web (aide en français et en anglais, avec cette précision) et dans le client.
+  La ligne d'état `FILTER:` devient `SEARCH:` (même largeur). `SEARCH` est plus long que `FIND` : la ligne des touches passe à
+  un seul espace entre les groupes et commence à la colonne 1 (37 colonnes ; avec deux espaces elle en ferait 41 sur 40).
+- **Recherche sans résultat plus lisible.** Avant : un message rouge de 2 s, puis `SEARCH: ALL` sans explication (testé avec
+  « momo » : le seul morceau correspondant est marqué incompatible, donc jamais proposé). Maintenant : `NO MATCH: <texte>` en
+  rouge et `PLAYING ANY TUNE INSTEAD` pendant environ 5 s, puis `SEARCH: ALL (NO MATCH)` sur le morceau suivant (+112 octets,
+  client à 8 425 octets, image `$AF00-$CEE8`). Non testé en VICE (la version démo n'a pas de réseau) ; à vérifier sur l'Ultimate.
+- **Page web sans numéro de port** : `https://sidbox.boombass.net` (alias DNS vers le VPS + Caddy en reverse proxy, certificat
+  Let's Encrypt renouvelé seul). Le jukebox TCP (6474) ne change pas. Détails dans `BaseC64/fiches/reseau-protocole.md`.
+- **Port 6475 fermé de l'extérieur** : `web.py --host 127.0.0.1 --trust-proxy` (l'IP des visiteurs vient de `X-Forwarded-For`,
+  ajouté par Caddy ; sans cela tous auraient l'IP `127.0.0.1` et la pause par IP jouerait contre tout le monde), et le port est
+  retiré de `firewalld`. L'ancienne adresse `http://boombass.net:6475` ne répond plus ; `deploy/jukeweb.service` est à jour.
+- **Textes du scroller** : adresse `HTTPS://SIDBOX.BOOMBASS.NET` et `V1.6 IS AVAILABLE`, sur le serveur (`scroll.txt`) et dans le
+  texte de secours du client (l'ancienne adresse n'aurait plus fonctionné).
+- Constaté en passant : `web.py` ne répond qu'à `GET` (un `HEAD` renvoie 501) ; sans effet pour un navigateur.
+- Premiers utilisateurs extérieurs le 2026-11-20 : 3 adresses IP distinctes en trois jours dans le journal du service, dont deux
+  autres que celle du développeur (47 connexions).
+
 ## Le catalogue selon la place prise par le client
 
 Plus le client est gros, plus il monte dans la mémoire et moins il reste de place pour les morceaux.

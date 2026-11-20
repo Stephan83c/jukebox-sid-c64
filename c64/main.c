@@ -27,7 +27,7 @@ static const unsigned char demo_data[] = {
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
-static char d_scroll[] = "          SID JUKEBOX  ***  V1.5 IS AVAILABLE  ***  EDIT SCROLL HTTP://BOOMBASS.NET:6475  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
+static char d_scroll[] = "          SID JUKEBOX  ***  V1.6 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
 #endif
 
 static unsigned char chunk[128];
@@ -36,6 +36,7 @@ static unsigned char nfiltre;
 static unsigned char boucle;     /* 1 = on rejoue le même morceau à la fin */
 static unsigned char rejouer;    /* 1 = on rejoue le morceau déjà en mémoire, sans le redemander au serveur */
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
+static unsigned char perdu;      /* la recherche précédente n'a rien donné : rappelé sur la ligne SEARCH du morceau suivant */
 static unsigned char ancien;     /* serveur sans RANDOM2 (avant v1.5) : on envoie RANDOM, limité par le serveur à $A6FF */
 static char cmdr[48];
 static char hdr[340];   /* en-tête OK|... : titre, auteur, année, texte du scroller (170 au plus) */
@@ -386,14 +387,15 @@ static void touche(const char *k, const char *action, unsigned char couleur)
     cputs(action);
 }
 
-/* Ligne des touches, centrée (39 colonnes sur 40) ; LOOP et VIS en vert quand ils sont actifs, en gris sinon. */
+/* Ligne des touches, centrée (37 colonnes sur 40, jamais la 40e : écrire en bas à droite ferait défiler l'écran) ;
+   un espace entre les groupes, car "S=SEARCH" ne tient pas avec deux ; LOOP et VIS en vert quand ils sont actifs. */
 static void options(void)
 {
-    gotoxy(0, 24);
-    touche("SPC", "=NEXT  ", COLOR_GRAY2);
-    touche("S", "=FIND  ", COLOR_GRAY2);
-    touche("L", "=LOOP  ", boucle ? COLOR_LIGHTGREEN : COLOR_GRAY2);
-    touche("V", "=VIS  ", vis_on ? COLOR_LIGHTGREEN : COLOR_GRAY2);
+    gotoxy(1, 24);
+    touche("SPC", "=NEXT ", COLOR_GRAY2);
+    touche("S", "=SEARCH ", COLOR_GRAY2);
+    touche("L", "=LOOP ", boucle ? COLOR_LIGHTGREEN : COLOR_GRAY2);
+    touche("V", "=VIS ", vis_on ? COLOR_LIGHTGREEN : COLOR_GRAY2);
     touche("Q", "=QUIT", COLOR_GRAY2);
 }
 
@@ -450,9 +452,12 @@ void jukebox(void)
         message(3, "CONNECTING...", COLOR_WHITE);
         if (!rejouer && !recuperer()) {
             if (aucun) {
-                message(3, "NO MATCH, PLAYING ANY...", COLOR_LIGHTRED);
+                message(3, "NO MATCH: ", COLOR_LIGHTRED);   /* le texte cherché reste à l'écran, sur 40 colonnes pile */
+                montrer(filtre, nfiltre);
+                message(4, "PLAYING ANY TUNE INSTEAD", COLOR_GRAY2);
                 nfiltre = 0;
-                attendre(120);
+                perdu = 1;
+                attendre(250);
                 continue;
             }
             message(3, uci_bloquee ? "ULTIMATE LOCKED: POWER CYCLE IT" : "FAILED, RETRYING...", COLOR_LIGHTRED);
@@ -477,9 +482,14 @@ void jukebox(void)
         cputs("00:00 / ");     /* le lecteur met à jour ces 5 chiffres (colonne 6, ligne 10) */
         duree(secs);
         if (nfiltre) {
-            champ_ligne(11, "FILTER: ", COLOR_WHITE, filtre, nfiltre);
+            champ_ligne(11, "SEARCH: ", COLOR_WHITE, filtre, nfiltre);
         } else {
-            champ_ligne(11, "FILTER: ", COLOR_WHITE, "ALL", 3);
+            champ_ligne(11, "SEARCH: ", COLOR_WHITE, "ALL", 3);
+            if (perdu) {
+                textcolor(COLOR_LIGHTRED);
+                cputs(" (NO MATCH)");
+                perdu = 0;
+            }
         }
         zone_effets();
         options();

@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 mkdir -p build
 OSC=${OSC:-oscar64}
 OSCINC=${OSCINC:-$(dirname "$(command -v "$OSC")")/../include}
-VERSION=${VERSION:-1.5}
+VERSION=${VERSION:-1.6}
 IP=${SERVEUR_IP:-boombass.net}; PORT=${SERVEUR_PORT:-6474}; MAXS=${MAX_SECS:-1000}; VIS=${VIS:-1}
 if [ "$1" = demo ]; then
   RUN=$((0x9800)); DEF="-DDEMO"; OUT=build/demo.prg     # le morceau intégré (demo.bin) occupe le bas de la mémoire

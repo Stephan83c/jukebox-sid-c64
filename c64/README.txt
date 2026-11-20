@@ -1,5 +1,5 @@
 ==========================================================================
- SID JUKEBOX v1.5 for the C64 Ultimate / pour le C64 Ultimate
+ SID JUKEBOX v1.6 for the C64 Ultimate / pour le C64 Ultimate
  https://github.com/Stephan83c/jukebox-sid-c64
 ==========================================================================
  Each section: English first, then francais.
@@ -75,10 +75,13 @@ KEYS / TOUCHES
 --------------
     SPACE / ESPACE
         EN next random tune             FR morceau suivant au hasard
-    S   EN search by artist or title (RETURN confirms, RUN/STOP cancels,
-           empty RETURN clears the filter)
-        FR recherche par artiste ou titre (RETURN valide, RUN/STOP annule,
-           RETURN seul efface le filtre)
+    S   EN search by artist or title: the next tunes are picked at random
+           among the matches (RETURN confirms, RUN/STOP cancels, empty
+           RETURN clears the search; no match = NO MATCH, any tune plays)
+        FR recherche par artiste ou titre : les morceaux suivants sont tires
+           au hasard parmi les resultats (RETURN valide, RUN/STOP annule,
+           RETURN seul efface la recherche ; rien trouve = NO MATCH, un
+           morceau au hasard est joue)
     L   EN loop on/off: replays the same tune when it ends (key turns green)
         FR boucle on/off : rejoue le meme morceau a la fin (touche verte)
     V   EN VU meters on/off (green; applies from the next tune)
@@ -98,7 +101,7 @@ FR  Logo geant, titre / artiste / annee, temps ecoule, vu-metres (un par
 
 THE SCROLLER AND ITS WEB PAGE / LE SCROLLER ET SA PAGE WEB
 ----------------------------------------------------------
-        http://boombass.net:6475/
+        https://sidbox.boombass.net/
 
 EN  The scroller text does NOT come from your C64: it comes from the
     server, and anybody can change it on the web page above.
