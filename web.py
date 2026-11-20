@@ -212,7 +212,7 @@ h1{font-size:1.4rem;letter-spacing:.2em}.scr{font-size:1.1rem}}
 </style></head><body><main>
 <nav class="lang" aria-label="Language"><a href="?lang=en"@@on_en@@>EN</a> | <a href="?lang=fr"@@on_fr@@>FR</a></nav>
 <h1>@@title@@</h1>
-<div class="row"><span class="lab">@@lab_text@@</span> <span class="val">@@source@@</span></div>
+<div class="row"><span class="lab">@@lab_text@@</span> <span class="val" id="src">@@source@@</span></div>
 <div class="row"><span class="lab">@@lab_next@@</span> <span class="val" id="nx" data-w="@@wait@@" data-now="@@now@@">@@next@@</span></div>
 <div class="row"><span class="lab">@@lab_reset@@</span> <span class="val" id="rs" data-w="@@left@@">@@reset@@</span></div>
 <div class="sp"></div>
@@ -245,8 +245,11 @@ nx.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';s
 if(w>0)tick();
 var rs=document.getElementById('rs'),lw=parseFloat(rs.dataset.w)||0,le=Date.now()+lw*1000;
 function rt(){var r=Math.ceil((le-Date.now())/1000);
-if(r<=0){rs.textContent='-';return}
+if(r<=0){rs.textContent='-';refresh();return}
 rs.textContent=r>=60?Math.floor(r/60)+' MIN '+('0'+r%60).slice(-2)+' S':r+' S';setTimeout(rt,250)}
+function refresh(){fetch(location.pathname+location.search,{cache:'no-store'}).then(function(x){return x.text()}).then(function(h){
+var d=new DOMParser().parseFromString(h,'text/html'),o=document.querySelector('.scr'),q=d.querySelector('.scr'),s=d.getElementById('src');
+if(o&&q)o.replaceWith(q);if(s)document.getElementById('src').textContent=s.textContent}).catch(function(){setTimeout(refresh,5000)})}
 if(lw>0)rt();
 </script></body></html>
 """
