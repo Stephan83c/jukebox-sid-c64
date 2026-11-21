@@ -77,7 +77,7 @@ the server while playing).
 | `SPACE` | next tune |
 | `S` | search by artist or title: the next tunes are picked at random among the matches (RETURN confirms, RUN/STOP cancels, empty RETURN = everything, i.e. clears the search; no match shows `NO MATCH` and any tune plays) |
 | `L` | loop on/off: replays the same tune when it ends (the tune restarts when you toggle it; replayed from memory, no network) |
-| `V` | VU meters on/off (takes effect on the next tune) |
+| `V` | VU meters on/off (restarts the same tune from 0:00) |
 | `Q` | quit (back to BASIC) |
 
 ## The protocol (text, one command per line)
