@@ -148,7 +148,7 @@ connexion, téléchargement, lecture) : la pile n'a pas dépassé 256 octets sou
 
 - **Issue #2** (`?SYNTAX ERROR IN 10`) : les 25 morceaux `entry_range` ont été écartés, cause non confirmée
   pour l'utilisateur d'origine (titre du morceau demandé).
-- **Morceaux qui se figent dans `init`** : avec les vu-mètres actifs, `init` tourne avec les E/S en RAM, donc un morceau qui attend `$D012` boucle sans fin (cas de Riparian, écarté via `bad_tunes.txt`). Les autres cas ne sont connus que quand ils plantent ; une recherche d'octets sur `$D011/$D012` donne surtout des faux positifs (5 sur 5 sains).
+- **Morceaux qui se figent dans `init`** : avec les vu-mètres actifs, `init` tourne avec les E/S en RAM, donc un morceau qui attend `$D012` boucle sans fin (cas de Riparian, écarté via `bad_tunes.txt`) ; « City of Love (Extended Edition) » fige aussi le vrai C64U sans raison connue (écarté en attendant). Les autres cas ne sont connus que quand ils plantent ; une recherche d'octets sur `$D011/$D012` donne surtout des faux positifs (5 sur 5 sains).
 - **Piste mémoire** : remonter `HISTART` à `$B700` (pile restante 619 octets) récupérerait 359 morceaux ; non
   fait, demande une nouvelle version du client et une mesure de la pile pendant la recherche.
 - **Piste générale** non faite : émuler `init` et refuser tout morceau qui écrit au-dessus de `HISTART`.
