@@ -52,6 +52,27 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
    Marge restante : 7 octets.
 
+## v1.8 : tempo juste en NTSC, plus de place (2026-11-21)
+
+- **Tempo PAL/NTSC** (demande d'un utilisateur américain sur Reddit, 2026-11-20 : sur son Ultimate en NTSC les morceaux PAL
+  allaient 20 % trop vite). Le lecteur appelait le morceau à chaque image vidéo, donc à 60 Hz en NTSC. Maintenant
+  `play.s` mesure la cadence de la machine au début de chaque morceau (raster qui monte ou non au-delà de la ligne 288)
+  et appelle le morceau à sa propre cadence (champ `fps` du serveur) avec un accumulateur : une image sur six sans appel
+  en NTSC pour un morceau 50 Hz, parfois deux appels en PAL pour un morceau 60 Hz. Le temps écoulé et la durée comptent
+  les appels réels (`tframes`) ; les effets visuels restent à la cadence de la machine (`frames`).
+  Mesuré avec une clé de capture HDMI (même morceau, *Zoids*, redémarré en PAL puis en NTSC) : facteur de vitesse
+  NTSC/PAL 1,005 (un tempo +20 % ressortirait à 1,2), identique sur ARMSID et sur UltiSID ; trois morceaux
+  enchaînés avec bascule NTSC -> PAL entre deux : le tempo suit. La hauteur, elle, reste 3,8 % plus aiguë en NTSC
+  (rapport mesuré 1,038) : l'horloge du SID n'est pas corrigée.
+  Limite : la cadence de la machine n'est mesurée qu'au début d'un morceau ; changer de mode vidéo en cours de morceau
+  ne se corrige qu'au morceau suivant.
+- **Place** : le lecteur a grossi, le client ne tenait plus à `$AF00`. Récupéré : `hdr` 340 -> 300, `cmd` 80 -> 64,
+  `uci_statut` 40 -> 16, tampon de commande partagé avec le tampon de lecture (`chunk` 120), `cy * 40` et `secs * fps`
+  sans la routine de multiplication (56 octets). Image `$AF00-$CE7C` ; le client tient jusqu'à `$AF40`, soit 64 octets
+  de marge avec la pile à 256. Piège : Oscar64 exige de placer la pile entière (`stacksize`) dans la région, le message
+  d'erreur est seulement « Cannot place stack section ».
+- **Éprouvé** : environ 25 minutes de lecture continue sur le vrai C64U sans plantage ni retour au BASIC.
+
 ## v1.7 : V ne change plus de morceau (2026-11-21)
 
 - **Issue #1** (signalée sur GitHub) : la touche V inversait `vis_on` mais laissait `rejouer` à 0, donc le morceau
@@ -146,7 +167,7 @@ qui écraseraient les clients `$A700` : il fallait que le client annonce sa limi
 
 ## À faire / idées
 
-- **Lecteur indifférent au NTSC/PAL** (demandé par un utilisateur américain sur Reddit, 2026-11-20 : sur son Ultimate réglé en NTSC,
+- **(Fait en v1.8 pour le tempo ; reste la hauteur) Lecteur indifférent au NTSC/PAL** (demandé par un utilisateur américain sur Reddit, 2026-11-20 : sur son Ultimate réglé en NTSC,
   les morceaux PAL vont environ 20 % trop vite ; il a dû repasser en PAL). Cause : le lecteur appelle le morceau une fois par
   image vidéo (`play.s`, interruption raster), donc à 60 Hz sur une machine NTSC ; comme sur un vrai C64, c'est « normal ». Piste
   pour le tempo : appeler le morceau à sa propre cadence (50 ou 60 Hz, que le serveur envoie déjà) en sautant 1 image sur 6 en

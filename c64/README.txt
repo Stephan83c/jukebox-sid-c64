@@ -1,5 +1,5 @@
 ==========================================================================
- SID JUKEBOX v1.7 for the C64 Ultimate / pour le C64 Ultimate
+ SID JUKEBOX v1.8 for the C64 Ultimate / pour le C64 Ultimate
  https://github.com/Stephan83c/jukebox-sid-c64
 ==========================================================================
  Each section: English first, then francais.
@@ -143,6 +143,10 @@ EN  - Server (server.py): a small text protocol over TCP. The C64 sends a
       $0800-$AEFF; the program lives in $AF00-$CFFF; the display uses
       $F400-$FFFF. A raster interrupt calls the tune's play routine every
       frame: the 6510 really plays the music.
+    - PAL and NTSC: the tune is played at its own rate (50 or 60 Hz, sent by
+      the server), so the tempo is the same on a PAL or NTSC machine (the
+      machine is measured when each tune starts). The pitch still follows
+      the SID clock: about 4 % higher on NTSC.
     - The connection is closed before the tune starts and reopened only for
       the next one: no network traffic while you listen.
     - Web page (web.py): a separate small web server; it only writes the
@@ -157,6 +161,10 @@ FR  - Serveur (server.py) : un petit protocole texte sur TCP. Le C64 envoie
       $0800-$AEFF ; le programme vit en $AF00-$CFFF ; l'affichage utilise
       $F400-$FFFF. Une interruption raster appelle la routine de lecture
       du morceau a chaque image : c'est bien le 6510 qui joue.
+    - PAL et NTSC : le morceau est joue a sa propre cadence (50 ou 60 Hz,
+      envoyee par le serveur), donc le tempo est le meme sur une machine PAL
+      ou NTSC (la machine est mesuree au debut de chaque morceau). La
+      hauteur suit toujours l'horloge du SID : environ 4 % plus aigue en NTSC.
     - La connexion est fermee avant le debut du morceau et rouverte
       seulement pour le suivant : aucun trafic reseau pendant l'ecoute.
     - Page web (web.py) : un petit serveur web separe ; il ne fait

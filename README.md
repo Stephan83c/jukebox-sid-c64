@@ -102,7 +102,7 @@ title, case-insensitively.
   `Songlengths.md5`, and flags as `compatible` the tunes our player can run: PSID (not RSID), a single SID,
   frame-driven (not a CIA timer), play routine present, fits between `$0800` and `HISTART-1`, 16 KB at most.
   Rejections and their reason stay in the database.
-- **Player (`c64/play.s`)**: one raster interrupt per frame calls the tune's routine. While playing, zero page
+- **Player (`c64/play.s`)**: one raster interrupt per frame drives the player. The tune's routine is called at the tune's own rate (50 or 60 Hz, sent by the server), whatever the machine's video mode: on a PAL or NTSC machine the tempo is the same (the machine's rate is measured when each tune starts; the pitch still follows the SID clock, about 4 % higher on NTSC). While playing, zero page
   belongs to the tune (saved before, restored after) and the keyboard is read straight from the matrix.
 - **VU meters**: the SID registers are write-only. During the tune call, `$D000-$DFFF` is mapped to RAM; writes
   aimed at the SID land there, get copied to a buffer, then to the real chip. Each voice's ADSR envelope is

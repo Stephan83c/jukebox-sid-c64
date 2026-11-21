@@ -27,10 +27,10 @@ static const unsigned char demo_data[] = {
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
-static char d_scroll[] = "          SID JUKEBOX  ***  V1.7 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
+static char d_scroll[] = "          SID JUKEBOX  ***  V1.8 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
 #endif
 
-static unsigned char chunk[128];
+static unsigned char chunk[120];   /* lecture par 120 octets au plus ; sert aussi à construire la commande */
 static char filtre[31];          /* recherche en cours (ASCII majuscule), vide = tout */
 static unsigned char nfiltre;
 static unsigned char boucle;     /* 1 = on rejoue le même morceau à la fin */
@@ -38,8 +38,8 @@ static unsigned char rejouer;    /* 1 = on rejoue le morceau déjà en mémoire,
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
 static unsigned char perdu;      /* la recherche précédente n'a rien donné : rappelé sur la ligne SEARCH du morceau suivant */
 static unsigned char ancien;     /* serveur sans RANDOM2 (avant v1.5) : on envoie RANDOM, limité par le serveur à $A6FF */
-static char cmdr[48];
-static char hdr[340];   /* en-tête OK|... : titre, auteur, année, texte du scroller (170 au plus) */
+#define cmdr ((char *)chunk)   /* la commande n'est plus utile une fois envoyée : le tampon de lecture sert aussi à la construire */
+static char hdr[300];   /* en-tête OK|... : titre, auteur, année (40+40+20 au plus), scroller (150) et 9 champs numériques ; trop long = tronqué */
 
 static unsigned t_id, t_size, t_secs, t_load, t_fps;
 static char *t_title, *t_author, *t_released;
@@ -474,7 +474,10 @@ void jukebox(void)
         champ_ligne(7, "RELEASED: ", COLOR_WHITE, t_released, 30);
         fps = t_fps == 60 ? 60 : 50;   /* cadence du morceau, pas celle de la machine */
         secs = t_secs > MAX_SECS ? MAX_SECS : t_secs;
-        frames_max = secs * fps;
+        frames_max = 0;                /* secs * fps par additions : évite la routine de multiplication */
+        for (r = fps; r; --r) {
+            frames_max += secs;
+        }
         debut(10);
         textcolor(COLOR_LIGHTBLUE);
         cputs("TIME: ");

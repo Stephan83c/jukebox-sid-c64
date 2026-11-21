@@ -14,7 +14,7 @@ static unsigned char cx, cy, col = COLOR_WHITE;
 static void gotoxy(unsigned char x, unsigned char y) { cx = x; cy = y; }
 static void cputc(unsigned char c)
 {
-    unsigned o = cy * 40u + cx;
+    unsigned o = (cy << 5) + (cy << 3) + cx;   /* cy * 40, sans la routine de multiplication */
     if (c >= 96 && c < 128) { c -= 32; }   /* minuscules -> majuscules */
     SCR[o] = c & 0x3F;          /* ASCII 32-95 -> code écran */
     COL[o] = col;

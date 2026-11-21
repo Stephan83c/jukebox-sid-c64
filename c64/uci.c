@@ -27,12 +27,12 @@
 #define NET_ECRIRE     0x11
 
 #define REP_MAX  128
-#define STAT_MAX 40
+#define STAT_MAX 16
 
 static unsigned char rep[REP_MAX];
 static unsigned char rep_n;
 char uci_statut[STAT_MAX + 1];
-static unsigned char cmd[80];
+static unsigned char cmd[64];
 
 unsigned char uci_present(void)
 {
@@ -130,7 +130,7 @@ static unsigned char executer(unsigned char n, unsigned limite)
 int net_ouvrir(const char *hote, unsigned port)
 {
     unsigned char n = strlen(hote);
-    if (n > 60) {
+    if (n > 56) {
         return -1;
     }
     cmd[0] = CIBLE_RESEAU;

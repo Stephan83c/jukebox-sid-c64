@@ -52,7 +52,10 @@ _fps:        .res 1
 _vis_on:     .res 1
 next:        .res 2
 digits:      .res 4         ; minutes dizaines/unités, secondes dizaines/unités
-frames:      .res 2
+frames:      .res 2         ; images vidéo de la machine (effets visuels)
+tframes:     .res 2         ; appels du morceau (temps écoulé, durée)
+acc:         .res 1         ; accumulateur de cadence : morceau (fps) contre machine (mfps)
+mfps:        .res 1         ; cadence vidéo de la machine : 50 (PAL) ou 60 (NTSC)
 seen:        .res 1
 result:      .res 1
 zpsave:      .res 256
@@ -659,6 +662,9 @@ _play_run:
         lda     #0
         sta     frames
         sta     frames + 1
+        sta     tframes
+        sta     tframes + 1
+        sta     acc
         sta     result
         sta     seen
         sta     digits
@@ -670,6 +676,20 @@ _play_run:
         lda     #0
         sta     next + 1
 
+        ; cadence de la machine : en PAL le raster monte jusqu'à la ligne 311, en NTSC 262
+        lda     #50
+        sta     mfps
+@d1:    lda     $D011
+        bpl     @d1             ; attendre la moitié basse de l'image (lignes >= 256)
+@d2:    lda     $D011
+        bpl     @dntsc          ; revenu en haut : l'image s'arrêtait avant la ligne 288
+        lda     $D012
+        cmp     #$20
+        bcc     @d2
+        bcs     @dok            ; ligne >= 288 : PAL
+@dntsc: lda     #60
+        sta     mfps
+@dok:
         jsr     vis_start
         lda     #0
         sta     $D020           ; bordure et fond noirs
@@ -709,11 +729,11 @@ _play_run:
 
 @wait:  jsr     keys
         bne     @key
-        lda     frames + 1      ; une seconde de plus ?
+        lda     tframes + 1     ; une seconde de plus ?
         cmp     next + 1
         bcc     @notick
         bne     @dotick
-        lda     frames
+        lda     tframes
         cmp     next
         bcc     @notick
 @dotick:
@@ -730,11 +750,11 @@ _play_run:
         jsr     model
         jsr     render
 @novis:
-        lda     frames + 1      ; durée atteinte ?
+        lda     tframes + 1     ; durée atteinte ?
         cmp     _frames_max + 1
         bcc     @wait
         bne     @fin
-        lda     frames
+        lda     tframes
         cmp     _frames_max
         bcc     @wait
 @fin:   lda     #0
@@ -839,6 +859,26 @@ irq_tune:
         sta     $D012
         lda     #$FF
         sta     $D019
+        inc     frames
+        bne     irq_cad
+        inc     frames + 1
+; Le morceau est appelé à SA cadence (fps), pas à celle de la machine (mfps) : on ajoute fps à
+; l'accumulateur à chaque image, et on appelle le morceau chaque fois qu'il atteint mfps
+; (PAL/50 sur NTSC : une image sur six sans appel ; NTSC/60 sur PAL : parfois deux appels).
+irq_cad:
+        cld
+        clc
+        lda     acc
+        adc     _fps
+        sta     acc
+irq_again:
+        cld
+        lda     acc
+        cmp     mfps
+        bcc     irq_out
+        sec
+        sbc     mfps
+        sta     acc
         lda     _vis_on
         beq     irq_direct
         lda     #$34            ; E/S en RAM pendant le morceau
@@ -848,7 +888,9 @@ pj:     jsr     $0000           ; play (adresse modifiée plus haut)
         jmp     irq_count
 irq_direct:
 pj2:    jsr     $0000
-irq_count: inc   frames
-        bne     irq_out
-        inc     frames + 1
+irq_count: cld
+        inc     tframes
+        bne     irq_again
+        inc     tframes + 1
+        jmp     irq_again
 irq_out: jmp    $EA81
