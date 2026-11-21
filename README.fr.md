@@ -6,6 +6,8 @@ Un jukebox en ligne façon *Belote LAN C64* : le **C64 Ultimate** demande un mor
 serveur, le reçoit par le réseau de l'Ultimate (UCI/TCP) et le **joue lui-même** (le 6510 exécute le code
 du morceau, comme à l'époque). Pas de synchronisation entre les clients : chacun a son tirage.
 
+🌐 **Page web : <https://sidbox.boombass.net>**
+
 L'écran de lecture : logo géant, titre / artiste / année, temps écoulé, trois vu-mètres (un par voix du
 SID, en dégradé arc-en-ciel), scroller de démo dont le texte vient du serveur, touches.
 
