@@ -106,6 +106,9 @@ def reject_reason(info, size, a) -> str | None:
         return "bad_range"
     if info["end"] > 0xFFFF:
         return "bad_range"
+    for k in ("init", "play"):
+        if info[k] < a.min_load or info[k] > a.max_addr:
+            return "entry_range"   # init/play dans le client, la ROM ou le bas de mémoire : le client retombe en BASIC (issue #2)
     if info["songs"] < 1:
         return "no_songs"
     if info["play"] == 0:
