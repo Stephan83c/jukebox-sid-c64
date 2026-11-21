@@ -48,9 +48,16 @@ def ipkey(ip: str) -> str:
     return str(a)
 
 
+_TRANSLIT = str.maketrans({"ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "œ": "oe", "Œ": "OE", "ß": "ss",
+                           "đ": "d", "Đ": "D", "ł": "l", "Ł": "L", "þ": "th", "Þ": "TH", "ð": "d", "Ð": "D",
+                           "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-"})
+
+
 def clean(s: str) -> str:
-    """Pas de '|' ni de retour ligne dans les champs texte."""
-    return " ".join((s or "").replace("|", "/").split())
+    """Pas de '|' ni de retour ligne dans les champs texte ; accents retirés (le C64 n'affiche que l'ASCII)."""
+    s = unicodedata.normalize("NFKD", (s or "").translate(_TRANSLIT))
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return " ".join(s.replace("|", "/").split())
 
 
 SCROLL_ALPHABET = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789*.,!?-/': ")
@@ -78,6 +85,7 @@ class Jukebox:
         self.scroll_ttl = scroll_ttl
         # base ouverte en lecture seule : le serveur n'écrit jamais dedans (update_db.sh la remplace de l'extérieur)
         self.con = sqlite3.connect(db.resolve().as_uri() + "?mode=ro", uri=True, check_same_thread=False)
+        self.con.create_function("fold", 1, clean, deterministic=True)   # recherche sur le texte tel qu'affiché (sans accents)
         self.conns: dict[str, int] = {}                  # connexions ouvertes par IP
         self.total = 0
         self.reqs: dict[str, list[float]] = {}           # horodatage des commandes récentes par IP
@@ -127,7 +135,7 @@ class Jukebox:
             esc = pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             like = f"%{esc}%"
             return self.con.execute(
-                "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? AND (author LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')"
+                "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? AND (fold(author) LIKE ? ESCAPE '\\' OR fold(title) LIKE ? ESCAPE '\\')"
                 " ORDER BY RANDOM() LIMIT 1", (max_addr, like, like)).fetchone()
         return self.con.execute(
             "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? ORDER BY RANDOM() LIMIT 1", (max_addr,)).fetchone()
