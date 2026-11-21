@@ -27,7 +27,7 @@ static const unsigned char demo_data[] = {
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
-static char d_scroll[] = "          SID JUKEBOX  ***  V1.6 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
+static char d_scroll[] = "          SID JUKEBOX  ***  V1.7 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
 #endif
 
 static unsigned char chunk[128];
