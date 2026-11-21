@@ -506,7 +506,8 @@ void jukebox(void)
             boucle = !boucle;      /* le lecteur s'arrête pour le prendre en compte : on repart du même morceau */
             rejouer = 1;
         } else if (r == 5) {
-            vis_on = !vis_on;   /* effets on/off : pris en compte au morceau suivant */
+            vis_on = !vis_on;   /* effets on/off : on repart du même morceau (issue #1 : V ne doit pas changer de morceau) */
+            rejouer = 1;
         }
     }
     clrscr();
