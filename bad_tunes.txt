@@ -1,0 +1,3 @@
+# Morceaux écartés à la main (MD5 du fichier .sid, puis un commentaire). Lu par indexer.py (raison « known_bad »)
+# et par fix_bad_tunes.py (pour corriger une base existante sans réindexer).
+1942310b7068f060d9e21a97cc1a53bb  Riparian (Goto80) : init attend $D012 alors que les E/S sont en RAM, le C64 se fige à 00:00

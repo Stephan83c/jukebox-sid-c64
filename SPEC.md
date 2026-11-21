@@ -65,6 +65,7 @@ la colonne `reject`. Le serveur ne sert que `compatible = 1`.
 | `unpacker` | en-tête `78 A9 35 85 01 20` : décompresse jusqu'à $CFFF et écrase le client |
 | `cia` | sous-morceau de départ cadencé par un timer CIA, pas à chaque image |
 | `entry_range` | `init` ou `play` hors de `--min-load`..`--max-addr` (issue #2, v1.8) |
+| `known_bad` | MD5 listé dans `bad_tunes.txt` (écarté à la main ; `fix_bad_tunes.py` l'applique à une base existante) |
 
 **Invariant** : `--max-addr` = `HISTART - 1` = `MEM_HAUT` (`c64/main.c`). Valeur actuelle : `$AEFF`.
 Attention : la valeur par défaut de `indexer.py` est `$BFFF`, il faut toujours passer `--max-addr` (ou
@@ -147,6 +148,7 @@ connexion, téléchargement, lecture) : la pile n'a pas dépassé 256 octets sou
 
 - **Issue #2** (`?SYNTAX ERROR IN 10`) : les 25 morceaux `entry_range` ont été écartés, cause non confirmée
   pour l'utilisateur d'origine (titre du morceau demandé).
+- **Morceaux qui se figent dans `init`** : avec les vu-mètres actifs, `init` tourne avec les E/S en RAM, donc un morceau qui attend `$D012` boucle sans fin (cas de Riparian, écarté via `bad_tunes.txt`). Les autres cas ne sont connus que quand ils plantent ; une recherche d'octets sur `$D011/$D012` donne surtout des faux positifs (5 sur 5 sains).
 - **Piste mémoire** : remonter `HISTART` à `$B700` (pile restante 619 octets) récupérerait 359 morceaux ; non
   fait, demande une nouvelle version du client et une mesure de la pile pendant la recherche.
 - **Piste générale** non faite : émuler `init` et refuser tout morceau qui écrit au-dessus de `HISTART`.

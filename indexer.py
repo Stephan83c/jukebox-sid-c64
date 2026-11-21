@@ -93,7 +93,20 @@ def parse_sid(data: bytes):
 UNPACKER_HEAD = bytes.fromhex("78a935850120")
 
 
-def reject_reason(info, size, a) -> str | None:
+def load_bad_tunes() -> set:
+    """MD5 des morceaux écartés à la main (bad_tunes.txt, à côté de ce script)."""
+    p = Path(__file__).with_name("bad_tunes.txt")
+    if not p.exists():
+        return set()
+    return {l.split()[0].lower() for l in p.read_text(encoding="utf-8").splitlines() if l.strip() and l[0] != "#"}
+
+
+BAD_TUNES = load_bad_tunes()
+
+
+def reject_reason(info, size, a, md5="") -> str | None:
+    if md5 in BAD_TUNES:
+        return "known_bad"      # écarté à la main : voir bad_tunes.txt
     if info["format"] == "RSID" and not a.allow_rsid:
         return "rsid"
     if info["mus"]:
@@ -176,7 +189,7 @@ def main():
         secs = None
         if durs:
             secs = durs[min(info["start_song"], len(durs)) - 1]
-        why = reject_reason(info, len(data), a)
+        why = reject_reason(info, len(data), a, md5)
         stats[why or "ok"] = stats.get(why or "ok", 0) + 1
         rows.append((
             rel, md5, info["format"], info["version"],
