@@ -1,3 +1,13 @@
+/*
+ * SID Jukebox C64
+ * Copyright (C) 2026 Stephan83c
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version. It is
+ * distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
+ */
 /* SID Jukebox, client C64 : partie C, compilée avec Oscar64 (voir build.sh).
  *
  * Le lecteur (play.s, logo.s, scroll.s) est assemblé à part avec ca65/ld65 (asm.bin) et placé en tête de la zone

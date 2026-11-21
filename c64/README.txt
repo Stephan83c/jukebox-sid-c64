@@ -190,13 +190,13 @@ FR  - Erreur reseau : verifie l'etape 1 (Command Interface activee) et 2.
 
 COPYRIGHT / DROIT D'AUTEUR
 --------------------------
-EN  The code is MIT-licensed. The tunes come from the High Voltage SID
+EN  The code is GPL-3.0-licensed. The tunes come from the High Voltage SID
     Collection (https://hvsc.c64.org/); they remain the property of their
     composers and are not in this zip. Any use beyond private listening is
     subject to copyright. The HVSC team replied on 2026-11-19: "It's all ok
     for us, please go on with your project." This is their approval, not a
     licence.
-FR  Le code est sous licence MIT. Les morceaux viennent de la High Voltage
+FR  Le code est sous licence GPL v3. Les morceaux viennent de la High Voltage
     SID Collection (https://hvsc.c64.org/) ; ils restent la propriete de
     leurs compositeurs et ne sont pas dans ce zip. Tout usage autre que
     l'ecoute privee releve du droit d'auteur. L'equipe HVSC a repondu le

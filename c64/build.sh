@@ -1,4 +1,12 @@
 #!/bin/bash
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 # Construit le client C64 : lecteur en assembleur (ca65/ld65) + partie C (Oscar64). Appelé par le Makefile.
 # Usage : ./build.sh [demo]   Variables : OSC, OSCINC, VERSION, HISTART, SERVEUR_IP, SERVEUR_PORT, MAX_SECS, VIS
 set -e

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 """Génère scroll.s : lettres du scroller (8 pixels de large x 16 de haut = 2 caractères superposés).
 
 Les formes viennent de la vraie police du C64 (chargen_set1.bin, extraite de VICE) doublée en hauteur
@@ -7,6 +15,13 @@ distincte, $FF = fin). Codes de caractères utilisés : 64 + 2 * (n - 1) (haut) 
 """
 TEXT = "          SID JUKEBOX  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "   # texte de secours (le vrai vient du serveur : scroll.txt)
 rom = open("chargen_set1.bin", "rb").read()
+
+HEADER = (
+    "; SID Jukebox C64\n; Copyright (C) 2026 Stephan83c\n; SPDX-License-Identifier: GPL-3.0-or-later\n;\n"
+    "; This program is free software: you can redistribute it and/or modify it under the\n"
+    "; terms of the GNU General Public License as published by the Free Software Foundation,\n"
+    "; either version 3 of the License, or (at your option) any later version. It is\n"
+    "; distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.\n")
 
 def screen_code(ch):
     if "A" <= ch <= "Z":
@@ -31,6 +46,6 @@ def dump(name, data, per=16):
     return "\n".join(out)
 
 with open("scroll.s", "w") as f:
-    f.write("; généré par make_scroll.py\n        .export scr_glyphs, scrtext\n        .rodata\n")
+    f.write(HEADER + "; généré par make_scroll.py\n        .export scr_glyphs, scrtext\n        .rodata\n")
     f.write(dump("scr_glyphs", glyphs, 8) + "\n" + dump("scrtext", stream) + "\n")
 print(len(order), "lettres distinctes :", "".join(order), "|", len(TEXT), "colonnes de texte")

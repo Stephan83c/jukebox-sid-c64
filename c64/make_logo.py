@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 """Génère logo.s : les lettres géantes du titre (16 x 24 pixels = 2 x 3 caractères).
 
 Les formes viennent de la même police que le scroller (la vraie police du C64, chargen_set1.bin extraite de VICE
@@ -10,6 +18,13 @@ TEXT = "SID JUKEBOX"
 COL0 = 9                      # première colonne du logo à l'écran (11 lettres x 2 = 22 colonnes)
 CODES = list(range(0x80, 0xA8)) + list(range(0xC2, 0xE0))      # codes libres, dans l'ordre
 rom = open("chargen_set1.bin", "rb").read()
+
+HEADER = (
+    "; SID Jukebox C64\n; Copyright (C) 2026 Stephan83c\n; SPDX-License-Identifier: GPL-3.0-or-later\n;\n"
+    "; This program is free software: you can redistribute it and/or modify it under the\n"
+    "; terms of the GNU General Public License as published by the Free Software Foundation,\n"
+    "; either version 3 of the License, or (at your option) any later version. It is\n"
+    "; distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.\n")
 
 def screen_code(ch):
     return ord(ch) - 64 if "A" <= ch <= "Z" else ord(ch)
@@ -58,7 +73,7 @@ def bytes_(name, data):
     return "\n".join(lines)
 
 with open("logo.s", "w") as f:
-    f.write("; généré par make_logo.py\n        .export logo_glyphs, logo_row0, logo_row1, logo_row2, LOGO_COL, LOGO_NGLYPH\n")
+    f.write(HEADER + "; généré par make_logo.py\n        .export logo_glyphs, logo_row0, logo_row1, logo_row2, LOGO_COL, LOGO_NGLYPH\n")
     f.write(f"LOGO_COL = {COL0}\nLOGO_NGLYPH = {ng}\n        .rodata\n")
     f.write(bytes_("logo_glyphs", glyphs) + "\n")
     for i, r in enumerate(rows):

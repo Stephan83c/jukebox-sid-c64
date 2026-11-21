@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 # Met à jour la base des morceaux du serveur à partir d'une HVSC plus récente.
 # Updates the server's tune database from a newer HVSC.   Doc : docs/UPDATE_DB.fr.md / docs/UPDATE_DB.md
 #

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 """Écarte d'une base existante les morceaux dont init/play sont hors de la mémoire des morceaux.
 Même règle que `entry_range` dans indexer.py, sans réindexer (issue #2).
 Usage : python3 fix_entry_range.py [jukebox.db] [--max-addr 0xAEFF] [--min-load 0x0800]

@@ -1,3 +1,11 @@
+; SID Jukebox C64
+; Copyright (C) 2026 Stephan83c
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; This program is free software: you can redistribute it and/or modify it under the
+; terms of the GNU General Public License as published by the Free Software Foundation,
+; either version 3 of the License, or (at your option) any later version. It is
+; distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 ; généré par make_logo.py
         .export logo_glyphs, logo_row0, logo_row1, logo_row2, LOGO_COL, LOGO_NGLYPH
 LOGO_COL = 9

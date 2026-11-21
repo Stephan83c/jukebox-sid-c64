@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# SID Jukebox C64
+# Copyright (C) 2026 Stephan83c
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software Foundation,
+# either version 3 of the License, or (at your option) any later version. It is
+# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
 """Génère demo.bin / demo.h / demo.s à partir d'un morceau du serveur (pour tester l'affichage dans VICE)."""
 import socket, sys
 tid = sys.argv[1] if len(sys.argv) > 1 else "27162"

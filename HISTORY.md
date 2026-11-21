@@ -178,6 +178,7 @@ qui écraseraient les clients `$A700` : il fallait que le client annonce sa limi
   sont fixés dans le `Makefile` à la compilation (valeurs actuelles : `boombass.net`, `6474`). Piste : champ
   modifiable au clavier, comme dans *Belote LAN C64* (touche F3).
 - Code sous licence MIT (ajoutée après la v1.1, ne couvre pas les morceaux de la HVSC) ; dépôt GitHub public : `Stephan83c/jukebox-sid-c64` (historique nettoyé avant la publication).
+- Passage de MIT à GPL v3 le 2026-11-22 (auteur unique) ; les versions déjà publiées restent sous MIT. Le fichier `LICENSE` contient désormais le texte GPLv3.
 - Le texte du scroller ne change qu'au morceau suivant ; un rafraîchissement en cours de lecture
   demanderait un accès réseau pendant le morceau (risque pour la synchronisation).
 - Plus de glyphes au scroller : alphabet de 45 glyphes (A-Z, `* . , ! ? - / ' :`, 0-9). Il reste 18 codes libres (`$C2-$DF`, 15 glyphes possibles), 16 octets par glyphe, 236 octets de marge.
