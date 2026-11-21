@@ -110,7 +110,10 @@ class Jukebox:
                 return u
         except OSError:
             pass
-        return self.scroll_default
+        d = self.scroll_default
+        if d and not d.exists():                         # scroll.txt est local (hors git) : sinon le modèle du dépôt
+            d = d.with_name(d.name + ".example")
+        return d
 
     def admit(self, ip: str) -> bool:
         """Ouvre une place pour cette IP, ou refuse si l'IP ou le serveur est plein."""

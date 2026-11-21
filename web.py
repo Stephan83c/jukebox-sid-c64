@@ -71,6 +71,8 @@ class State:
         """(texte affiché, vient-il d'un utilisateur et encore valable ?)"""
         t = self.last_change()
         src = self.a.user_file if t and time.time() - t < self.a.ttl else self.a.default_file
+        if src == self.a.default_file and not src.exists():   # scroll.txt est local (hors git) : sinon le modèle du dépôt
+            src = src.with_name(src.name + ".example")
         try:
             return src.read_text(encoding="utf-8", errors="replace").strip(), src == self.a.user_file
         except OSError:

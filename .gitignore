@@ -19,6 +19,9 @@ c64/chargen_set1.bin
 # page web du scroller : état local du serveur
 data/*
 !data/.gitkeep
+!data/scroll_user.txt.example
+# texte du scroller par défaut : local ; le modèle suivi est scroll.txt.example
+scroll.txt
 banned_ips.txt
 
 # sauvegardes de la base (update_db.sh, déploiements) : jamais dans le dépôt
