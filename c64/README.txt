@@ -1,5 +1,5 @@
 ==========================================================================
- SID JUKEBOX v1.6 for the C64 Ultimate / pour le C64 Ultimate
+ SID JUKEBOX v1.7 for the C64 Ultimate / pour le C64 Ultimate
  https://github.com/Stephan83c/jukebox-sid-c64
 ==========================================================================
  Each section: English first, then francais.
@@ -84,8 +84,8 @@ KEYS / TOUCHES
            morceau au hasard est joue)
     L   EN loop on/off: replays the same tune when it ends (key turns green)
         FR boucle on/off : rejoue le meme morceau a la fin (touche verte)
-    V   EN VU meters on/off (green; applies from the next tune)
-        FR vu-metres on/off (vert ; effet au morceau suivant)
+    V   EN VU meters on/off (green; restarts the same tune from 0:00)
+        FR vu-metres on/off (vert ; rejoue le meme morceau depuis 0:00)
     Q   EN quit, back to BASIC      FR quitter, retour au BASIC
 
 THE PLAY SCREEN / L'ECRAN DE LECTURE

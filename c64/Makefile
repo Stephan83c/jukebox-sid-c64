@@ -2,7 +2,7 @@ SERVEUR_IP ?= boombass.net
 SERVEUR_PORT ?= 6474
 ULTIMATE ?= 192.168.1.27
 HISTART ?= 0xAF00
-VERSION ?= 1.6
+VERSION ?= 1.7
 MAX_SECS ?= 1000
 VIS ?= 1
 # Oscar64 (https://github.com/drmortalwombat/oscar64) : chemin du compilateur, et de ses fichiers d'en-tête

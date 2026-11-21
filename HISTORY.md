@@ -52,6 +52,15 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
    Marge restante : 7 octets.
 
+## v1.7 : V ne change plus de morceau (2026-11-21)
+
+- **Issue #1** (signalée sur GitHub) : la touche V inversait `vis_on` mais laissait `rejouer` à 0, donc le morceau
+  suivant était demandé au serveur. Maintenant `rejouer = 1`, comme pour L : le même morceau repart de 0:00 avec
+  le nouveau réglage (le lecteur ne lit `vis_on` qu'au démarrage d'un morceau ; un basculement à chaud demanderait
+  de modifier `play.s`). Testé sur le C64U le 2026-11-21.
+- **Issue #2** (`?SYNTAX ERROR IN 10`, retour au BASIC 3 s après le début d'un morceau) : en attente de précisions
+  du rapporteur (morceau concerné). Non corrigée.
+
 ## v1.6 : SEARCH, adresse sans port, port 6475 fermé (2026-11-20)
 
 - **S=FIND devient S=SEARCH.** Une remarque sur Reddit : « FIND » laisse croire qu'on obtient une liste de morceaux, alors que
