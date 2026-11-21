@@ -56,6 +56,7 @@ python3 server.py --root /path/to/C64Music --port 6474      # listens on 0.0.0.0
   `Restart=on-failure`); for it to survive logout and reboot, an administrator must run
   `sudo loginctl enable-linger <account>`.
 - Updating the tune database after a new HVSC release: [docs/UPDATE_DB.md](docs/UPDATE_DB.md).
+- Publishing a new client version: [docs/RELEASE.md](docs/RELEASE.md).
 - Updating from GitHub: `git pull` in the server folder (a read-only deploy key if the repo is private),
   then restart the server.
 
