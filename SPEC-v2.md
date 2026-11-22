@@ -322,6 +322,14 @@ appel (en $C000-$CFFF) :  LDA #sous-morceau-1 / JSR init      (ou JSR play depui
 - Le morceau est toujours appelé avec `$01 = $36` (E/S visibles, ROM BASIC coupée, KERNAL présent).
 - `$01 = $34` n'est plus utilisé pour jouer (fin de la capture).
 - L'IRQ de lecture DOIT être en `$C000-$CFFF` et rendre la main par un chemin qui ne dépend pas de la ROM BASIC.
+- Choix de l'étape 3 (SIDBox2, 2026-11-22) : **entre deux appels, le lecteur tourne avec `$01 = $35`** (KERNAL coupé) et son IRQ
+  arrive directement par le vecteur matériel `$FFFE` (en RAM) : un morceau qui écrase `$0314`, `$028F` ou toute la page 3 ne
+  peut plus dérouter le lecteur. Une IRQ survenue **pendant** un appel (morceau qui fait `CLI`) est acquittée et ignorée :
+  par `$FFFE` si le morceau a coupé le KERNAL (drapeau `incall`), par `$0314` sinon. NMI ignorées (`$FFFA` et `$0318`).
+- Piège : le jeu de caractères de l'écran de lecture (`$F800-$FFFF`) recouvre `$FFFA-$FFFF` ; les vecteurs DOIVENT être
+  réécrits après sa copie (ce sont les derniers octets de la forme du caractère `$FF`, jamais affiché).
+- Après chaque appel : copie des 25 premiers octets de la copie du bloc de relais dans `shadow` (vu-mètres), puis, si
+  `complet = 1` et normes différentes, correction de `shadow` et réécriture des 6 registres de fréquence (§7.6).
 
 ### 7.4 Fonctions (identiques à la v1.9)
 
@@ -454,7 +462,7 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 |---|---|---|
 | 1 | `sidscan` (à partir de `sidcheck`) : conditions §4.1, verdict, sites, `relay_addr` ; table `scan` | comptes sur toute la base, morceaux de non-régression conformes |
 | 2 | Serveur : `RANDOM3`/`GET3`, fabrication du bloc ; tests par `test_v3.py` (référence `sidscan --dump`, serveur local, relecture et contrôles §6.1) | octets identiques à la fabrication de référence. **Fait le 2026-11-22** : 43 974 morceaux avec relais identiques, 317 sans relais servis tels quels |
-| 3 | Client, lecteur seul (démo sans réseau) : appel §7.3, contrat §7.2, relais, vu-mètres, hauteur | banc VICE §9.2 vert sur toute la liste |
+| 3 | Client, lecteur seul (démo sans réseau) : appel §7.3, contrat §7.2, relais, vu-mètres, hauteur | banc VICE §9.2 vert sur toute la liste. **Fait le 2026-11-22** (`SIDBox2_C64/tools/banc.py`, 3 passages par morceau dont un dans l'autre norme) : 11 morceaux verts, *El Joe* refusé par l'analyse |
 | 4 | Client, réseau : UCI, délais §7.7, garde-fou §7.8 | §9.3 sauf endurance |
 | 5 | Mesure de taille, choix de `HISTART`, réindexation, `scan_version` | morceaux jouables comptés et comparés à la v1.9 |
 | 6 | Endurance, NTSC, docs (README FR/EN, HISTORY), mise à jour du VPS par l'utilisateur, release v2.0 | §9.3 complet |
