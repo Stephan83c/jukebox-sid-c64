@@ -52,6 +52,30 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
    Marge restante : 7 octets.
 
+## v1.9 : hauteur juste en PAL/NTSC, norme affichée (2026-11-22)
+
+- **Hauteur** (suite de la demande Reddit du 2026-11-20 : « le SID sait s'il est PAL, ajuste en conséquence »). L'horloge du SID suit la
+  machine (PAL 985 kHz, NTSC 1 023 kHz) : un morceau de l'autre norme sonnait 3,8 % trop aigu (NTSC) ou trop grave (PAL). `fixpitch`
+  (`play.s`), appelée par `sync_sid` quand la cadence du morceau diffère de celle de la machine, corrige les fréquences des 3 voix dans la
+  copie « shadow » : v -/+ (v + v/4)/32 = x0,961 ou x1,039 (plafond $FFFF), à peu près 0,2 % d'écart avec le rapport exact. Sans
+  vu-mètres la copie est quand même utilisée quand les normes diffèrent (morceau avec E/S en RAM : voir le cas Riparian).
+  Mesuré par capture HDMI : rapport de hauteur NTSC/PAL 1,038 -> 1,000 (9 morceaux de la HVSC, 5 à 50 Hz et 4 à 60 Hz : 0,998-1,001) ;
+  enchaînement *Cyberworm* (50 Hz) puis *Zack's Stew* (60 Hz) sans redémarrer, machine PAL : 1,000 ; 20 min NTSC + 10 min PAL de
+  lecture réelle sans plantage.
+- **Affichage** : après le temps, la norme de la machine puis la cadence du morceau (`PAL  60HZ`, `NTSC 50HZ`).
+- **Place** : `stacksize(256)` -> `64` (la pile logicielle d'Oscar64 n'est jamais utilisée : aucune référence dans le code généré ; 61 octets
+  de frames statiques seulement). Sauvegarde de la page zéro (`zpsave`, 256 octets) déplacée en `$D200`, RAM sous les E/S
+  (accès avec `$01 = $34` sous `sei`) : `$E000-$F3FF` avait été essayé, mais chaque page y est écrite par 20 à 50 morceaux
+  (mesuré par `sidcheck`), `$D200` par 2. Image `$AF00-$CEB7`, environ 240 octets libres.
+- **Gels** : *El Joe* figeait le lecteur (`play` sans fin, E/S en RAM). `sidcheck.c` émule le lecteur sur toute la base
+  (44 676 morceaux en 18 s) : 285 morceaux dangereux (écriture ou exécution dans le client, vecteurs, init/play sans fin)
+  ajoutés à `bad_tunes.txt` ; plus *Horror City* (muet). Test : 20 min de « Next » automatique toutes les 1,3 à 5 s, sans gel.
+  Parade dans le client : l'interruption du CIA1 est réactivée avant chaque accès réseau (les délais réseau comptent sur
+  l'horloge du KERNAL). Bug évité en route : `fixpitch` (dans l'IRQ) partageait `tmp/tmp2` avec les vu-mètres.
+- **Serveur** : `QUIT` comptait dans le limiteur (15 morceaux/min réels) ; 8 connexions accrochées bloquaient l'IP 5 min.
+  `QUIT`/`STATS` ne comptent plus, inactivité 30 s, la plus ancienne connexion coupée par RST. Le client affiche
+  `SERVER BUSY, WAIT...` sur `ERR|trop de requetes` (avant : « NO MATCH » et la recherche effacée). `make_demo.py` produit aussi `DEMO_FPS`.
+
 ## v1.8 : tempo juste en NTSC, plus de place (2026-11-21)
 
 - **Tempo PAL/NTSC** (demande d'un utilisateur américain sur Reddit, 2026-11-20 : sur son Ultimate en NTSC les morceaux PAL
@@ -63,7 +87,7 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
   Mesuré avec une clé de capture HDMI (même morceau, *Zoids*, redémarré en PAL puis en NTSC) : facteur de vitesse
   NTSC/PAL 1,005 (un tempo +20 % ressortirait à 1,2), identique sur ARMSID et sur UltiSID ; trois morceaux
   enchaînés avec bascule NTSC -> PAL entre deux : le tempo suit. La hauteur, elle, reste 3,8 % plus aiguë en NTSC
-  (rapport mesuré 1,038) : l'horloge du SID n'est pas corrigée.
+  (rapport mesuré 1,038) : l'horloge du SID n'était pas corrigée (fait en v1.9).
   Limite : la cadence de la machine n'est mesurée qu'au début d'un morceau ; changer de mode vidéo en cours de morceau
   ne se corrige qu'au morceau suivant.
 - **Place** : le lecteur a grossi, le client ne tenait plus à `$AF00`. Récupéré : `hdr` 340 -> 300, `cmd` 80 -> 64,

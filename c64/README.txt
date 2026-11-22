@@ -1,5 +1,5 @@
 ==========================================================================
- SID JUKEBOX v1.8 for the C64 Ultimate / pour le C64 Ultimate
+ SID JUKEBOX v1.9 for the C64 Ultimate / pour le C64 Ultimate
  https://github.com/Stephan83c/jukebox-sid-c64
 ==========================================================================
  Each section: English first, then francais.
@@ -145,8 +145,10 @@ EN  - Server (server.py): a small text protocol over TCP. The C64 sends a
       frame: the 6510 really plays the music.
     - PAL and NTSC: the tune is played at its own rate (50 or 60 Hz, sent by
       the server), so the tempo is the same on a PAL or NTSC machine (the
-      machine is measured when each tune starts). The pitch still follows
-      the SID clock: about 4 % higher on NTSC.
+      machine is measured when each tune starts). The pitch is corrected
+      too (the SID clock differs by 3.8 %): a tune of the other standard is
+      transposed to sound as on its own machine. The screen shows the
+      machine and the tune rate after the time, e.g. "PAL  60HZ".
     - The connection is closed before the tune starts and reopened only for
       the next one: no network traffic while you listen.
     - Web page (web.py): a separate small web server; it only writes the
@@ -164,7 +166,10 @@ FR  - Serveur (server.py) : un petit protocole texte sur TCP. Le C64 envoie
     - PAL et NTSC : le morceau est joue a sa propre cadence (50 ou 60 Hz,
       envoyee par le serveur), donc le tempo est le meme sur une machine PAL
       ou NTSC (la machine est mesuree au debut de chaque morceau). La
-      hauteur suit toujours l'horloge du SID : environ 4 % plus aigue en NTSC.
+      hauteur est corrigee aussi (l'horloge du SID differe de 3,8 %) : un
+      morceau de l'autre norme est transpose pour sonner comme sur sa machine.
+      L'ecran affiche apres le temps la machine et la cadence du morceau,
+      par exemple "PAL  60HZ".
     - La connexion est fermee avant le debut du morceau et rouverte
       seulement pour le suivant : aucun trafic reseau pendant l'ecoute.
     - Page web (web.py) : un petit serveur web separe ; il ne fait

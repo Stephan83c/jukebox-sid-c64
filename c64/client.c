@@ -26,7 +26,7 @@
 #include "asmsyms.h"   /* généré par build.sh : adresses des variables et de play_run dans asm.bin */
 #include "uci.h"
 
-#pragma stacksize(256)
+#pragma stacksize(64)
 #pragma heapsize(0)
 
 #pragma section(startup, 0)

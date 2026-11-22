@@ -37,7 +37,7 @@ static const unsigned char demo_data[] = {
 static char d_title[] = DEMO_TITLE;
 static char d_author[] = DEMO_AUTHOR;
 static char d_released[] = DEMO_RELEASED;
-static char d_scroll[] = "          SID JUKEBOX  ***  V1.8 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
+static char d_scroll[] = "          SID JUKEBOX  ***  V1.9 IS AVAILABLE  ***  EDIT SCROLL HTTPS://SIDBOX.BOOMBASS.NET  ***  BY STEPHAN  ***  THANK YOU FOR COMING  ***  HAVE FUN !!!!          ";
 #endif
 
 static unsigned char chunk[120];   /* lecture par 120 octets au plus ; sert aussi à construire la commande */
@@ -46,6 +46,7 @@ static unsigned char nfiltre;
 static unsigned char boucle;     /* 1 = on rejoue le même morceau à la fin */
 static unsigned char rejouer;    /* 1 = on rejoue le morceau déjà en mémoire, sans le redemander au serveur */
 static unsigned char aucun;      /* le serveur n'a rien trouvé pour ce filtre */
+static unsigned char occupe;     /* ERR|trop de requetes : le serveur fait patienter */
 static unsigned char perdu;      /* la recherche précédente n'a rien donné : rappelé sur la ligne SEARCH du morceau suivant */
 static unsigned char ancien;     /* serveur sans RANDOM2 (avant v1.5) : on envoie RANDOM, limité par le serveur à $A6FF */
 #define cmdr ((char *)chunk)   /* la commande n'est plus utile une fois envoyée : le tampon de lecture sert aussi à la construire */
@@ -189,12 +190,15 @@ static unsigned char recuperer(void)
     play_addr = DEMO_PLAY;
     song_nr = 1;
     t_secs = DEMO_SECS;
+    t_fps = DEMO_FPS;
     t_title = d_title;
     t_author = d_author;
     t_released = d_released;
     charger_scroll(d_scroll);
     return 1;
 #endif
+    *(volatile unsigned char *)0xDC0D = 0x81;   /* parade : interruption du CIA1 réactivée (les délais réseau comptent sur l'horloge du KERNAL) */
+    __asm { cli };
     s = net_ouvrir(SERVEUR_IP, SERVEUR_PORT);
     if (s < 0) {
         return 0;
@@ -213,6 +217,7 @@ static unsigned char recuperer(void)
     }
     cmdr[k++] = LF;
     aucun = 0;
+    occupe = 0;
     if (net_ecrire(s, cmdr, k)) {
         t0 = jiffies_m();
         for (;;) {
@@ -237,6 +242,8 @@ static unsigned char recuperer(void)
                     if (hdr[0] == 'E') {
                         if (hdr[4] == 'c') {
                             ancien = 1;   /* ERR|commande inconnue : serveur d'avant la v1.5, on réessaie avec RANDOM */
+                        } else if (hdr[4] == 't') {
+                            occupe = 1;   /* ERR|trop de requetes : on patiente, sans toucher à la recherche */
                         } else {
                             aucun = 1;    /* ERR|aucun morceau */
                         }
@@ -470,7 +477,8 @@ void jukebox(void)
                 attendre(250);
                 continue;
             }
-            message(3, uci_bloquee ? "ULTIMATE LOCKED: POWER CYCLE IT" : "FAILED, RETRYING...", COLOR_LIGHTRED);
+            message(3, uci_bloquee ? "ULTIMATE LOCKED: POWER CYCLE IT" : occupe ? "SERVER BUSY, WAIT..." : "FAILED, RETRYING...",
+                    occupe ? COLOR_YELLOW : COLOR_LIGHTRED);
             if (uci_bloquee) {
                 for (;;) {
                 }

@@ -48,6 +48,7 @@ SCRL       = SCR2 + SCROLL_ROW * 40
 LINE_A     = 50 + 8 * SCROLL_ROW    ; juste avant la ligne : on décale l'affichage
 LINE_B     = 58 + 8 * (SCROLL_ROW + 1)   ; dernière ligne du scroller : on remet le décalage à 0
 SPEED      = 2                      ; pixels par image
+ZPSAVE     = $D200                  ; sauvegarde de la page zéro : RAM sous les E/S, accessible avec $01 = $34 (page écrite par 2 morceaux sur 44 676, voir sidcheck)
 SCR2       = $F400                  ; écran de lecture avec effets (RAM sous le KERNAL, banque VIC 3)
 CHR2       = $F800                  ; jeu de caractères de lecture
 
@@ -66,7 +67,6 @@ acc:         .res 1         ; accumulateur de cadence : morceau (fps) contre mac
 mfps:        .res 1         ; cadence vidéo de la machine : 50 (PAL) ou 60 (NTSC)
 seen:        .res 1
 result:      .res 1
-zpsave:      .res 256
 shadow:      .res 25        ; copie des registres $D400-$D418
 prevg:       .res 3         ; gate précédent de chaque voix
 state:       .res 3         ; 0 relâchement, 1 attaque, 2 déclin/maintien
@@ -76,6 +76,8 @@ vi:          .res 1
 vo:          .res 1
 tmp:         .res 1
 tmp2:        .res 1
+fp1:         .res 1         ; variables de fixpitch (appelée dans l'IRQ : ne pas partager tmp/tmp2 avec la boucle principale)
+fp2:         .res 1
 xs:          .res 1         ; décalage fin du scroller (0-7)
 stage:       .res 1         ; 0 = avant le scroller, 1 = après, 2 = le morceau
 tpos:        .res 2         ; prochain caractère du texte
@@ -89,6 +91,8 @@ nbot:        .res 1         ; code de la case du bas du caractère suivant
 VERLEN = .strlen(VERSION_TXT) + 1        ; « V » puis le numéro
 version: .byte 22                      ; V (code écran)
         scrcode VERSION_TXT
+normes: scrcode "pal  ", "ntsc "   ; minuscules : scrcode donne les majuscules en $41-$5A (formes du scroller)
+cadences: scrcode "50hz", "60hz"
 ; pas par image (20 ms) : attaque (2 ms .. 8 s) puis déclin/relâchement (6 ms .. 24 s)
 astep:  .byte 255, 255, 255, 212, 134, 91, 75, 64, 51, 20, 10, 6, 5, 2, 1, 1
 dstep:  .byte 255, 212, 106, 71, 45, 30, 25, 21, 17, 7, 3, 2, 2, 1, 1, 1
@@ -211,7 +215,11 @@ sync_sid:
         sta     shadow,x
         dex
         bpl     @cp
-        lda     #$36
+        lda     _fps            ; morceau et machine de normes différentes : corriger la hauteur
+        cmp     mfps
+        beq     @ok
+        jsr     fixpitch
+@ok:    lda     #$36
         sta     $01
         ldx     #0
 @wr:    lda     shadow,x
@@ -219,6 +227,58 @@ sync_sid:
         inx
         cpx     #25
         bne     @wr
+        rts
+
+; Hauteur : l'horloge du SID suit la machine (PAL 985 kHz, NTSC 1023 kHz, rapport 1,038).
+; On corrige les fréquences des 3 voix dans "shadow" : v - (v + v/4)/32 = x0,961 (morceau PAL sur
+; machine NTSC) ou v + (v + v/4)/32 = x1,039 (morceau NTSC sur machine PAL, plafonné à $FFFF).
+fixpitch:
+        ldx     #14
+@v:     lda     shadow + 1,x
+        lsr
+        sta     fp2
+        lda     shadow,x
+        ror
+        lsr     fp2
+        ror                     ; fp2:A = v / 4
+        clc
+        adc     shadow,x
+        sta     fp1
+        lda     fp2
+        adc     shadow + 1,x    ; retenue = bit 16
+        ror
+        sta     fp2
+        ror     fp1
+        ldy     #4
+@s:     lsr     fp2
+        ror     fp1
+        dey
+        bne     @s              ; fp2:fp1 = (v + v/4) / 32
+        lda     _fps
+        cmp     mfps
+        bcs     @up             ; morceau 60 Hz sur machine 50 Hz : plus aigu
+        sec
+        lda     shadow,x
+        sbc     fp1
+        sta     shadow,x
+        lda     shadow + 1,x
+        sbc     fp2
+        bcs     @st             ; (toujours)
+@up:    clc
+        lda     shadow,x
+        adc     fp1
+        sta     shadow,x
+        lda     shadow + 1,x
+        adc     fp2
+        bcc     @st
+        lda     #$FF
+        sta     shadow,x
+@st:    sta     shadow + 1,x
+        txa
+        sec
+        sbc     #7
+        tax
+        bpl     @v
         rts
 
 ; ---------------------------------------------------------------- effets
@@ -575,6 +635,33 @@ vis_start:
         sta     $D800 + 39 - (VERLEN - 1),x
         dex
         bpl     @ve
+        ldy     #0              ; après le temps : norme de la machine, puis cadence du morceau
+        lda     mfps
+        cmp     #60
+        bne     @pl
+        ldy     #5
+@pl:    ldx     #0
+@pn:    lda     normes,y
+        sta     SCR2 + 10 * 40 + 21,x
+        lda     #$0C
+        sta     $D800 + 10 * 40 + 21,x
+        iny
+        inx
+        cpx     #5
+        bne     @pn
+        ldy     #0
+        lda     _fps
+        cmp     #60
+        bne     @pt
+        ldy     #4
+@pt:    lda     cadences,y
+        sta     SCR2 + 10 * 40 + 21,x
+        lda     #$0C
+        sta     $D800 + 10 * 40 + 21,x
+        iny
+        inx
+        cpx     #9
+        bne     @pt
         lda     $DD00
         and     #$FC            ; banque 3
         sta     $DD00
@@ -596,9 +683,11 @@ vis_start:
 _play_run:
         sei
         cld
+        lda     #$34            ; tout en RAM : ZPSAVE est sous les E/S
+        sta     $01
         ldx     #2
 @sv:    lda     $00,x
-        sta     zpsave,x
+        sta     ZPSAVE,x
         inx
         bne     @sv
 
@@ -792,11 +881,15 @@ _play_run:
         lda     #$15
         sta     $D018
         jsr     silence
+        lda     #$34            ; tout en RAM pour relire ZPSAVE (IRQ coupées depuis le sei plus haut)
+        sta     $01
         ldx     #2
-@rs:    lda     zpsave,x
+@rs:    lda     ZPSAVE,x
         sta     $00,x
         inx
         bne     @rs
+        lda     #$36
+        sta     $01
         cld
         ldx     #0
         lda     result
@@ -888,7 +981,11 @@ irq_again:
         sbc     mfps
         sta     acc
         lda     _vis_on
+        bne     irq_shadow
+        lda     _fps            ; effets coupés : la correction de hauteur a quand même besoin de la copie
+        cmp     mfps
         beq     irq_direct
+irq_shadow:
         lda     #$34            ; E/S en RAM pendant le morceau
         sta     $01
 pj:     jsr     $0000           ; play (adresse modifiée plus haut)

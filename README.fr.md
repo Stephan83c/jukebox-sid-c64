@@ -104,7 +104,7 @@ Les clients antérieurs à la v1.5 envoient `RANDOM` simple : le serveur ne leur
   `Songlengths.md5`, et marque `compatible` les morceaux que le lecteur sait jouer : PSID (pas RSID), un
   seul SID, cadencé par l'image (pas par un timer CIA), routine de lecture présente, tient entre
   `$0800` et `HISTART-1`, 16 Ko au plus. Les rejets et leur raison restent en base.
-- **Lecteur (`c64/play.s`)** : une interruption raster par image pilote le lecteur. La routine du morceau est appelée à la cadence du morceau (50 ou 60 Hz, envoyée par le serveur), quel que soit le mode vidéo de la machine : en PAL comme en NTSC le tempo est le même (la cadence de la machine est mesurée au début de chaque morceau ; la hauteur suit toujours l'horloge du SID, environ 4 % plus aiguë en NTSC). Pendant
+- **Lecteur (`c64/play.s`)** : une interruption raster par image pilote le lecteur. La routine du morceau est appelée à la cadence du morceau (50 ou 60 Hz, envoyée par le serveur), quel que soit le mode vidéo de la machine : en PAL comme en NTSC le tempo est le même (la cadence de la machine est mesurée au début de chaque morceau ; la hauteur est corrigée aussi : l'horloge du SID diffère de 3,8 %, donc un morceau de l'autre norme voit ses registres de fréquence multipliés par environ 0,96 ou 1,04 ; l'écran affiche la machine et la cadence du morceau après le temps, par exemple `PAL  60HZ`). Pendant
   la lecture la page zéro appartient au morceau (sauvegardée avant, restaurée après) et le clavier est lu
   directement sur la matrice.
 - **Vu-mètres** : les registres du SID sont en écriture seule. Pendant l'appel du morceau, `$D000-$DFFF`
