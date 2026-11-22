@@ -26,7 +26,9 @@ import argparse
 import asyncio
 import ipaddress
 import logging
+import socket
 import sqlite3
+import struct
 import time
 import unicodedata
 from pathlib import Path
@@ -35,9 +37,9 @@ log = logging.getLogger("jukebox")
 DEFAULT_SECONDS = 180
 MAX_CONN_IP = 8          # connexions simultanées par IP (un C64 en prend une)
 MAX_CONN = 200           # connexions simultanées au total
-REQ_WINDOW, REQ_MAX = 60, 30      # commandes par IP et par minute
+REQ_WINDOW, REQ_MAX = 60, 30      # morceaux demandés par IP et par minute (QUIT et STATS ne comptent pas)
 FIRST_LINE_TIMEOUT = 20  # secondes pour envoyer la première commande (sinon on coupe)
-IDLE_TIMEOUT = 300       # secondes d'attente entre deux commandes (un C64 reste connecté pendant un morceau)
+IDLE_TIMEOUT = 30        # secondes d'attente entre deux commandes (le client ferme avant de jouer : une connexion muette est perdue)
 MAX_LINE = 1024          # taille maximale d'une commande
 LEGACY_MAX_ADDR = 0xA6FF  # fin de zone des clients qui envoient RANDOM sans limite (HISTART $A700)
 MIN_MAX_ADDR = 0x0900     # limite minimale acceptée pour RANDOM2 (en dessous, rien ne tient)
@@ -94,7 +96,7 @@ class Jukebox:
         # base ouverte en lecture seule : le serveur n'écrit jamais dedans (update_db.sh la remplace de l'extérieur)
         self.con = sqlite3.connect(db.resolve().as_uri() + "?mode=ro", uri=True, check_same_thread=False)
         self.con.create_function("fold", 1, clean, deterministic=True)   # recherche sur le texte tel qu'affiché (sans accents)
-        self.conns: dict[str, int] = {}                  # connexions ouvertes par IP
+        self.conns: dict[str, list] = {}                 # connexions ouvertes par IP (StreamWriter, de la plus ancienne à la plus récente)
         self.total = 0
         self.reqs: dict[str, list[float]] = {}           # horodatage des commandes récentes par IP
         self.con.row_factory = sqlite3.Row
@@ -115,20 +117,30 @@ class Jukebox:
             d = d.with_name(d.name + ".example")
         return d
 
-    def admit(self, ip: str) -> bool:
-        """Ouvre une place pour cette IP, ou refuse si l'IP ou le serveur est plein."""
-        if self.total >= MAX_CONN or self.conns.get(ip, 0) >= MAX_CONN_IP:
+    def admit(self, ip: str, w) -> bool:
+        """Ouvre une place pour cette IP. IP pleine : on coupe sa plus ancienne connexion (l'Ultimate laisse parfois
+        des connexions à moitié fermées, qui bloqueraient toute la maison) ; serveur plein : refus."""
+        lst = self.conns.setdefault(ip, [])
+        if len(lst) >= MAX_CONN_IP:
+            old = lst.pop(0)
+            self.total -= 1
+            log.info("IP %s pleine : coupure de la plus ancienne connexion", ip)
+            cut(old)
+        if self.total >= MAX_CONN:
+            if not lst:
+                del self.conns[ip]
             return False
-        self.conns[ip] = self.conns.get(ip, 0) + 1
+        lst.append(w)
         self.total += 1
         return True
 
-    def leave(self, ip: str):
-        self.total -= 1
-        if self.conns[ip] <= 1:
-            del self.conns[ip]
-        else:
-            self.conns[ip] -= 1
+    def leave(self, ip: str, w):
+        lst = self.conns.get(ip, [])
+        if w in lst:                 # absente si elle a déjà été coupée par admit()
+            lst.remove(w)
+            self.total -= 1
+        if not lst:
+            self.conns.pop(ip, None)
 
     def req_ok(self, ip: str) -> bool:
         now = time.time()
@@ -185,10 +197,21 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row, scroll: Path | No
     w.write(head.encode("latin-1", "replace") + data)
 
 
+def cut(w):
+    """Coupe une connexion par un vrai RST (SO_LINGER à 0) : un simple close() envoie un FIN, que l'Ultimate peut ignorer."""
+    try:
+        sock = w.get_extra_info("socket")
+        if sock is not None:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+        w.transport.abort()
+    except Exception:
+        pass
+
+
 async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
     peer = w.get_extra_info("peername")
     ip = ipkey(peer[0]) if peer else "?"
-    if not jb.admit(ip):
+    if not jb.admit(ip, w):
         log.info("refusé %s (trop de connexions)", peer)
         w.close()
         return
@@ -200,13 +223,13 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
             first = False
             if not line:
                 break
-            if not jb.req_ok(ip):
-                w.write(b"ERR|trop de requetes\n")
-                await w.drain()
-                continue
             cmd, _, arg = line.decode("latin-1").strip().partition(" ")
             cmd = cmd.upper()
             arg = arg.strip()
+            if cmd not in ("QUIT", "STATS") and not jb.req_ok(ip):
+                w.write(b"ERR|trop de requetes\n")
+                await w.drain()
+                continue
             if cmd == "RANDOM":
                 row = jb.pick(arg[:40] or None)
                 if row:
@@ -236,7 +259,7 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
     except Exception:
         log.exception("erreur avec %s", peer)
     finally:
-        jb.leave(ip)
+        jb.leave(ip, w)
         w.close()
         log.info("déconnexion %s", peer)
 
