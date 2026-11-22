@@ -290,3 +290,4 @@ b3a91768316448a419da20a8d8ad6ff0  Dim4 (Stephen L. Judd (Wyndex)) : sidcheck cli
 6c73dc3400ec47ce4989cbe9a7e74510  Gallery #1 (Giulio Zicchi (Zed)) : sidcheck vect FFFF
 17f57a51e5c7af944871c2ae081c92d7  Bergentrückung (Zlew) : sidcheck client CFD3
 96bc6894d8cf1fb38be22f810f39d49e  I Wish There Was a Girl in... (Zlew) : sidcheck client CFD3
+4cef3c2caff2153e97badcef8e395944  Horror City (<?>) : aucun son sur le vrai C64U (signalé par l'utilisateur, 2026-11-22)
