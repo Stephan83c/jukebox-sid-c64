@@ -358,7 +358,9 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
                         log.info("%s RANDOM3 %s %r -> %s", peer, lim.upper(), pat.strip(), row["path"])
                     await send_tune3(w, jb, row, int(lim, 16), jb.scroll)
             elif cmd == "GET3" and arg.isdigit():
-                await send_tune3(w, jb, jb.get3(int(arg)), SCAN_HISTART - 1, jb.scroll)
+                row = jb.get3(int(arg))
+                log.info("%s GET3 %s -> %s", peer, arg, row["path"] if row else "aucun")
+                await send_tune3(w, jb, row, SCAN_HISTART - 1, jb.scroll)
             elif cmd == "GET" and arg.isdigit():
                 await send_tune(w, jb, jb.get(int(arg)), jb.scroll)
             elif cmd == "STATS":

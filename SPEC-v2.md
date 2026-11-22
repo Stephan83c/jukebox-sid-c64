@@ -242,6 +242,17 @@ OK3|id|taille|secondes|images/s|sous-morceau|chargement|init|play|relais|taille_
 
 - Les compteurs sont en mémoire : un redémarrage les remet à zéro.
 - Clients v1.x : `RANDOM` sans limite vaut `$A6FF` ; `RANDOM2` et `GET` inchangés ; ils ne reçoivent jamais de morceau modifié.
+- **Protection des clients v1.9 (décision D9, 2026-11-22)** : le client v1.9 publié reste tel quel (D7), mais le serveur cesse de
+  lui envoyer les morceaux qui font planter son lecteur, repérés par `sidscan` :
+  - `$01` laissé avec la ROM BASIC visible (`$01 & 3 = 3`) par `init` ou `play` : retour à `READY.` (*Adidas Football*) ;
+  - écriture dans `$028F/$0290` (vecteur clavier KEYLOG) : gel à `CONNECTING...` (*Stormy Night*) ;
+  - écriture dans les vecteurs `$0314-$0333` (IRQ, BRK, NMI, vecteurs du KERNAL).
+  Les commandes v1 (`RANDOM`, `RANDOM2`, `GET`) excluent ces morceaux ; les commandes v2 les servent (le client v2.0 restaure
+  `$01` et les pages 2-3). Sans table `scan`, le serveur sert comme avant. À mesurer avant de l'activer : nombre de morceaux retirés
+  aux clients v1.9 (estimation : 152 pour `$01`, 529 pour `$028F`, 10 pour les vecteurs, mesures `sidcheck` du 2026-11-22).
+- **Réintégration des morceaux écartés à la main** (`known_bad` acceptés par l'analyse, 80 au 2026-11-22) : par un indicateur
+  propre à la v2 (lu par `RANDOM3`/`GET3`), **jamais** en remettant `compatible = 1`, qui les enverrait aussi aux clients v1.9
+  (certains plantent leur lecteur, ex. *Riparian*).
 - Exploitation : service `systemd --user` (`deploy/jukebox.service`, durci), journal par `journalctl --user -u jukebox`, mise à jour par
   `git pull` puis redémarrage, base remplacée par `update_db.sh` (avec les tables `scan` en v2.0). L'utilisateur fait lui-même les
   opérations sur le serveur public.
@@ -465,6 +476,7 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 | 3 | Client, lecteur seul (démo sans réseau) : appel §7.3, contrat §7.2, relais, vu-mètres, hauteur | banc VICE §9.2 vert sur toute la liste. **Fait le 2026-11-22** (`SIDBox2_C64/tools/banc.py`, 3 passages par morceau dont un dans l'autre norme) : 11 morceaux verts, *El Joe* refusé par l'analyse |
 | 4 | Client, réseau : UCI, délais §7.7, garde-fou §7.8 | §9.3 sauf endurance |
 | 5 | Mesure de taille, choix de `HISTART`, réindexation, `scan_version` | morceaux jouables comptés et comparés à la v1.9 |
+| 5 bis | Protection des clients v1.9 (D9, §6.2) : `sidscan` relève les écritures en `$028F/$0290` et `$0314-$0333` (nouvelle colonne, `scan_version` + 1) ; le serveur exclut ces morceaux et ceux qui laissent la ROM BASIC visible des commandes v1 ; `test_v3.py` le vérifie | nombre de morceaux retirés aux clients v1.9 mesuré et accepté par l'utilisateur, test vert |
 | 6 | Endurance, NTSC, docs (README FR/EN, HISTORY), mise à jour du VPS par l'utilisateur, release v2.0 | §9.3 complet |
 
 ---
@@ -481,3 +493,4 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 | D6 | Garde-fou | NMI du CIA2 armé par le client pendant `init`/`play` (incompatible avec un morceau qui utilise les NMI : à mesurer par `sidscan`) ou simple refus par l'analyse |
 | D7 | Corrections v1.9 du 2026-11-22 (tremplins, pages 2-3) | **Décidé le 2026-11-22 : abandonnées, la v1.9 reste à l'état publié.** Patch gardé pour référence : `SIDBox2_C64/docs/v1.9-corrections-non-publiees.patch` (piège Oscar64 compris, voir `BaseC64/bugs.md`) |
 | D8 | Durée d'émulation `N` | 10 000 appels (200 s) ; plus long si le temps de calcul le permet |
+| D9 | Protéger les clients v1.9 restés en service | **Décidé le 2026-11-22 : oui**, par le serveur (§6.2, étape 5 bis) ; le client v1.9 n'est pas modifié |
