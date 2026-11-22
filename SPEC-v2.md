@@ -167,6 +167,11 @@ Pour une réponse `RANDOM3`, le serveur :
 
 Le serveur NE DOIT PAS modifier un octet qui n'est pas un site listé par `sidscan` pour la `scan_version` courante.
 
+Implémentation (étape 2, 2026-11-22) : `server.py` `build_relays()`, octet pour octet comme `fabriquer()` de `sidscan.c` (même
+fonction pour la 2e émulation et pour `sidscan --dump`). Le serveur contrôle chaque site avant de le remplacer (opcode du fichier égal
+à celui de la liste, base dans `$D400-$D41F`, bloc hors du morceau et ≥ `$0800`) ; au moindre écart le morceau part sans relais
+(journal `relais refusés`). Relais servis seulement si `verif = ok` et si le bloc tient sous la limite `<fin>` du client.
+
 ### 5.5 Repli (morceaux sans relais complet, 2,3 %) — décision D3
 
 Un morceau dont au moins un site n'est pas remplaçable (§5.2), ou qui a plus de 48 sites, ou pour lequel aucune zone libre ne
@@ -208,13 +213,17 @@ OK3|id|taille|secondes|images/s|sous-morceau|chargement|init|play|relais|taille_
   `chargement + taille > HISTART`, bloc de relais hors de `$0800..HISTART-1` ou qui chevauche le morceau, `taille_relais > 368`,
   sous-morceau = 0, un champ numérique illisible.
 - Toutes les règles d'encodage de `SPEC.md` §3 restent (ASCII sans accents, motif ≤ 40 caractères, scroller 150 caractères).
+- `GET3 <id>` : la limite est `HISTART - 1` de l'analyse servie (`SCAN_HISTART` de `server.py`).
+- Nombres de l'en-tête en décimal, comme en v1. Erreurs : `ERR|aucun morceau`, `ERR|limite invalide`,
+  `ERR|commande indisponible` (base sans table `scan`).
 - Limites du serveur : §6.2.
 
 ### 6.2 Serveur (`server.py`) — comportement de la v1.9 conservé
 
 - Un seul processus `asyncio`, **aucun état partagé entre clients** ; la base SQLite est ouverte au démarrage (tout changement de
   `jukebox.db` demande un redémarrage, après avoir vérifié dans le journal qu'aucun C64 n'est connecté).
-- Tirage : un morceau `compatible = 1` au hasard (de la `scan_version` courante pour les commandes v2), qui tient sous la limite
+- Tirage : un morceau `compatible = 1` au hasard (commandes v2 : en plus, ligne `scan` du sous-morceau de départ avec
+  `verdict = ok`, pour la `scan_version` la plus récente de `SCAN_HISTART`/`SCAN_CALLS`, constantes en tête de `server.py`), qui tient sous la limite
   `<fin>` envoyée par le client ; avec motif, recherche sans casse ni accents dans l'auteur et le titre (jokers SQL neutralisés).
   Durée : celle de la base (Songlengths HVSC), 180 s si inconnue.
 - Textes envoyés au C64 : translittérés sans accents (`ø` -> `o`, `æ` -> `ae`, `ß` -> `ss`…), ASCII 32-95.
@@ -444,7 +453,7 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 | # | Étape | Terminée quand |
 |---|---|---|
 | 1 | `sidscan` (à partir de `sidcheck`) : conditions §4.1, verdict, sites, `relay_addr` ; table `scan` | comptes sur toute la base, morceaux de non-régression conformes |
-| 2 | Serveur : `RANDOM3`/`GET3`, fabrication du bloc ; tests avec `client_pc.py` (relecture et vérification des octets) | octets identiques à la fabrication de référence en Python |
+| 2 | Serveur : `RANDOM3`/`GET3`, fabrication du bloc ; tests par `test_v3.py` (référence `sidscan --dump`, serveur local, relecture et contrôles §6.1) | octets identiques à la fabrication de référence. **Fait le 2026-11-22** : 43 974 morceaux avec relais identiques, 317 sans relais servis tels quels |
 | 3 | Client, lecteur seul (démo sans réseau) : appel §7.3, contrat §7.2, relais, vu-mètres, hauteur | banc VICE §9.2 vert sur toute la liste |
 | 4 | Client, réseau : UCI, délais §7.7, garde-fou §7.8 | §9.3 sauf endurance |
 | 5 | Mesure de taille, choix de `HISTART`, réindexation, `scan_version` | morceaux jouables comptés et comparés à la v1.9 |

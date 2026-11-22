@@ -18,6 +18,12 @@ Protocole texte (une commande par ligne, réponses terminées par \\n) :
                         client laisse aux morceaux (HISTART - 1) : seuls les morceaux qui finissent au plus tard
                         à cette adresse sont proposés (client v1.5 et suivants).
     GET <id>         -> idem pour un morceau précis
+    RANDOM3 <fin> [motif]  -> v2.0 (SPEC-v2.md §6.1) :
+                        OK3|id|taille|secondes|images/s|sous-morceau|chargement|init|play|relais|taille_relais|complet|titre|auteur|année|scroller\n
+                        + <taille> octets de code (sites d'écriture SID remplacés par JSR vers les relais)
+                        + <taille_relais> octets : bloc de relais à copier à l'adresse <relais> (0 et 0 : pas de relais)
+                        Seuls les morceaux acceptés par l'analyse sidscan (table « scan ») sont proposés.
+    GET3 <id>        -> idem pour un morceau précis
     STATS            -> STATS|compatibles|total\\n
     QUIT             -> ferme la connexion
     erreur           -> ERR|message\\n
@@ -42,7 +48,14 @@ FIRST_LINE_TIMEOUT = 20  # secondes pour envoyer la première commande (sinon on
 IDLE_TIMEOUT = 30        # secondes d'attente entre deux commandes (le client ferme avant de jouer : une connexion muette est perdue)
 MAX_LINE = 1024          # taille maximale d'une commande
 LEGACY_MAX_ADDR = 0xA6FF  # fin de zone des clients qui envoient RANDOM sans limite (HISTART $A700)
-MIN_MAX_ADDR = 0x0900     # limite minimale acceptée pour RANDOM2 (en dessous, rien ne tient)
+MIN_MAX_ADDR = 0x0900     # limite minimale acceptée pour RANDOM2 et RANDOM3 (en dessous, rien ne tient)
+# Analyse servie aux commandes v2 (table « scan ») : HISTART et nombre d'appels de l'analyse ; la version est la plus
+# récente présente dans la base pour ces deux valeurs. HISTART définitif fixé à l'étape 5 de SPEC-v2.md.
+SCAN_HISTART = 0xAF00
+SCAN_CALLS = 10000
+MAX_RELAYS = 48           # SPEC-v2.md §5.3 : bloc de 32 + 7 × 48 = 368 octets au plus
+COPY_LEN = 32
+RELAY_OPS = (0x8D, 0x8E, 0x8C, 0x9D, 0x99)   # STA/STX/STY absolu, STA absolu,X / absolu,Y (§5.2)
 
 
 def ipkey(ip: str) -> str:
@@ -87,6 +100,43 @@ def scroll_text(path: Path) -> str:
     return " " * 10 + txt + " " * 10 if txt else ""
 
 
+def build_relays(code: bytes, load: int, relais: str, rz: int) -> tuple[bytes, bytes]:
+    """Fabrication du morceau modifié (SPEC-v2.md §5.4), octet pour octet comme sidscan (fabriquer()).
+
+    relais : « adresse:opcode » séparés par des virgules, dans l'ordre des relais (colonne scan.relais).
+    Rend (code modifié, bloc de relais). Le bloc : copie de 32 octets à zéro, puis pour chaque site k, en rz + 32 + 7k :
+    « op base / op rz+(base & $1F) / RTS » ; le site devient « JSR rz + 32 + 7k ». Aucun autre octet n'est modifié.
+    ValueError si la liste ne correspond pas au fichier (le morceau part alors sans relais)."""
+    sites = [(int(a, 16), int(o, 16)) for a, o in (x.split(":") for x in relais.split(","))]
+    if not 0 < len(sites) <= MAX_RELAYS:
+        raise ValueError("nombre de relais")
+    n = COPY_LEN + 7 * len(sites)
+    end = load + len(code) - 1
+    if rz < 0x0800 or not (rz + n - 1 < load or rz > end) or rz + n > 0x10000:
+        raise ValueError("bloc de relais mal placé")
+    m = bytearray(code)
+    block = bytearray(n)
+    for k, (ad, op) in enumerate(sites):
+        i = ad - load
+        if op not in RELAY_OPS or i < 0 or i + 3 > len(m) or m[i] != op:
+            raise ValueError("site %04X introuvable" % ad)
+        base = m[i + 1] | m[i + 2] << 8
+        if not 0xD400 <= base <= 0xD41F:
+            raise ValueError("site %04X hors du SID" % ad)
+        st, cp = rz + COPY_LEN + 7 * k, rz + (base & 0x1F)
+        block[COPY_LEN + 7 * k:COPY_LEN + 7 * k + 7] = bytes((op, base & 255, base >> 8, op, cp & 255, cp >> 8, 0x60))
+        m[i:i + 3] = bytes((0x20, st & 255, st >> 8))
+    return bytes(m), bytes(block)
+
+
+def tune_code(data: bytes) -> bytes:
+    """Code brut d'un fichier PSID : sans l'en-tête (ni l'adresse de chargement intégrée)."""
+    off = (data[6] << 8) | data[7]
+    if (data[8] << 8 | data[9]) == 0:
+        off += 2
+    return data[off:]
+
+
 class Jukebox:
     def __init__(self, db: Path, root: Path, scroll: Path | None = None,
                  scroll_user: Path | None = None, scroll_ttl: int = 3600):
@@ -101,6 +151,10 @@ class Jukebox:
         self.reqs: dict[str, list[float]] = {}           # horodatage des commandes récentes par IP
         self.con.row_factory = sqlite3.Row
         self.root = root
+        self.scan_version = None                         # analyse servie aux commandes v2 (None : RANDOM3/GET3 refusés)
+        if self.con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='scan'").fetchone():
+            self.scan_version = self.con.execute("SELECT MAX(scan_version) FROM scan WHERE histart=? AND calls=?",
+                                                 (SCAN_HISTART, SCAN_CALLS)).fetchone()[0]
 
     @property
     def scroll(self) -> Path | None:
@@ -163,6 +217,24 @@ class Jukebox:
         return self.con.execute(
             "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? ORDER BY RANDOM() LIMIT 1", (max_addr,)).fetchone()
 
+    SELECT3 = ("SELECT t.*, s.complet AS s_complet, s.relay_addr, s.relay_len, s.nrelais, s.verif, s.relais AS s_relais"
+               " FROM tunes t JOIN scan s ON s.tune_id = t.id AND s.song = t.start_song"
+               " AND s.scan_version = ? AND s.histart = ? AND s.calls = ?"
+               " WHERE t.compatible = 1 AND s.verdict = 'ok'")
+
+    def pick3(self, pattern: str | None, max_addr: int):
+        args = [self.scan_version, SCAN_HISTART, SCAN_CALLS, max_addr]
+        q = self.SELECT3 + " AND t.end_addr <= ?"
+        if pattern:
+            esc = pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            q += " AND (fold(t.author) LIKE ? ESCAPE '\\' OR fold(t.title) LIKE ? ESCAPE '\\')"
+            args += [f"%{esc}%"] * 2
+        return self.con.execute(q + " ORDER BY RANDOM() LIMIT 1", args).fetchone()
+
+    def get3(self, tune_id: int):
+        return self.con.execute(self.SELECT3 + " AND t.id = ?",
+                                (self.scan_version, SCAN_HISTART, SCAN_CALLS, tune_id)).fetchone()
+
     def get(self, tune_id: int):
         return self.con.execute("SELECT * FROM tunes WHERE id=? AND compatible=1", (tune_id,)).fetchone()
 
@@ -181,12 +253,7 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row, scroll: Path | No
     if row is None:
         w.write(b"ERR|aucun morceau\n")
         return
-    data = jb.payload(row)
-    # on enlève l'en-tête PSID (et l'adresse de chargement intégrée) : le C64 reçoit le code brut
-    off = (data[6] << 8) | data[7]
-    if (data[8] << 8 | data[9]) == 0:
-        off += 2
-    data = data[off:]
+    data = tune_code(jb.payload(row))      # le C64 reçoit le code brut, sans en-tête PSID
     secs = int(row["seconds"] or DEFAULT_SECONDS)
     fps = 60 if row["clock"] == "NTSC" else 50     # cadence pour laquelle le morceau est écrit
     head = "OK|%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s|%s\n" % (
@@ -195,6 +262,41 @@ async def send_tune(w: asyncio.StreamWriter, jb: Jukebox, row, scroll: Path | No
         clean(row["title"])[:40], clean(row["author"])[:40], clean(row["released"])[:20],
         scroll_text(scroll) if scroll else "")
     w.write(head.encode("latin-1", "replace") + data)
+
+
+def tune3(jb: Jukebox, row, max_addr: int) -> tuple[bytes, int, bytes, int]:
+    """Code, adresse du bloc de relais, bloc et « complet » d'un morceau v2 (SPEC-v2.md §5.4, §5.5).
+    Relais servis seulement si la 2e émulation de sidscan les a vérifiés (verif = ok) et si le bloc tient sous max_addr ;
+    sinon le morceau part tel quel (relais 0, complet 0) et sera joué en direct."""
+    data = tune_code(jb.payload(row))
+    if row["verif"] != "ok" or not row["nrelais"]:
+        return data, 0, b"", 0
+    rz, n = row["relay_addr"], row["relay_len"]
+    if rz + n - 1 > max_addr:
+        return data, 0, b"", 0
+    try:
+        code, block = build_relays(data, row["load_addr"], row["s_relais"], rz)
+        if len(block) != n:
+            raise ValueError("taille du bloc %d au lieu de %d" % (len(block), n))
+    except ValueError as e:
+        log.warning("relais refusés pour %d (%s) : %s", row["id"], row["path"], e)
+        return data, 0, b"", 0
+    return code, rz, block, row["s_complet"]
+
+
+async def send_tune3(w: asyncio.StreamWriter, jb: Jukebox, row, max_addr: int, scroll: Path | None = None):
+    if row is None:
+        w.write(b"ERR|aucun morceau\n")
+        return
+    code, rz, block, complet = tune3(jb, row, max_addr)
+    secs = int(row["seconds"] or DEFAULT_SECONDS)
+    fps = 60 if row["clock"] == "NTSC" else 50
+    head = "OK3|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s|%s\n" % (
+        row["id"], len(code), secs, fps, row["start_song"],
+        row["load_addr"], row["init_addr"], row["play_addr"], rz, len(block), complet,
+        clean(row["title"])[:40], clean(row["author"])[:40], clean(row["released"])[:20],
+        scroll_text(scroll) if scroll else "")
+    w.write(head.encode("latin-1", "replace") + code + block)
 
 
 def cut(w):
@@ -244,6 +346,19 @@ async def handle(r: asyncio.StreamReader, w: asyncio.StreamWriter, jb: Jukebox):
                     if row:
                         log.info("%s RANDOM2 %s %r -> %s", peer, lim.upper(), pat.strip(), row["path"])
                     await send_tune(w, jb, row, jb.scroll)
+            elif cmd in ("RANDOM3", "GET3") and jb.scan_version is None:
+                w.write(b"ERR|commande indisponible\n")
+            elif cmd == "RANDOM3":
+                lim, _, pat = arg.partition(" ")
+                if len(lim) != 4 or any(c not in "0123456789abcdefABCDEF" for c in lim) or int(lim, 16) < MIN_MAX_ADDR:
+                    w.write(b"ERR|limite invalide\n")
+                else:
+                    row = jb.pick3(pat.strip()[:40] or None, int(lim, 16))
+                    if row:
+                        log.info("%s RANDOM3 %s %r -> %s", peer, lim.upper(), pat.strip(), row["path"])
+                    await send_tune3(w, jb, row, int(lim, 16), jb.scroll)
+            elif cmd == "GET3" and arg.isdigit():
+                await send_tune3(w, jb, jb.get3(int(arg)), SCAN_HISTART - 1, jb.scroll)
             elif cmd == "GET" and arg.isdigit():
                 await send_tune(w, jb, jb.get(int(arg)), jb.scroll)
             elif cmd == "STATS":
@@ -280,7 +395,9 @@ async def main():
     jb = Jukebox(a.db, a.root, a.scroll, a.scroll_user, a.scroll_ttl)
     srv = await asyncio.start_server(lambda r, w: handle(r, w, jb), a.host, a.port, limit=MAX_LINE)
     ok, total = jb.stats()
-    log.info("jukebox sur %s:%d, %d morceaux compatibles sur %d", a.host, a.port, ok, total)
+    log.info("jukebox sur %s:%d, %d morceaux compatibles sur %d ; analyse v2 : %s", a.host, a.port, ok, total,
+             "version %d (HISTART $%04X, %d appels)" % (jb.scan_version, SCAN_HISTART, SCAN_CALLS)
+             if jb.scan_version is not None else "absente (RANDOM3/GET3 refusés)")
     async with srv:
         await srv.serve_forever()
 

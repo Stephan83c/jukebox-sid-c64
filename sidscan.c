@@ -7,7 +7,9 @@
  * Relève les écritures, lectures et exécutions, les écritures SID (adresse et opcode de l'instruction), les cycles.
  * Rend le verdict (§4.2), la liste des relais et la zone du bloc de relais (§5.2, §5.3).
  *
- * Usage : sidscan [histart_hex] [appels] < liste      (lignes « id|chemin|sous-morceau|images/s »)
+ * Usage : sidscan [histart_hex] [appels] [--dump DOSSIER] < liste      (lignes « id|chemin|sous-morceau|images/s »)
+ *   --dump : pour chaque morceau relayé, écrit DOSSIER/id.code (octets chargement..fin, sites remplacés) et DOSSIER/id.relay
+ *   (bloc de relais), fabriqués par la même fonction que la 2e émulation : référence des tests du serveur (étape 2).
  * Sortie, une ligne par morceau :
  *   id|sous-morceau|verdict|raison|complet|relay_addr(hex)|relay_len|nsites|nrelais|init_cycles|play_max|port_init|port_play|lit_02a6|verif|relais|autres
  *   verif (2e émulation avec les relais en place) : ok, diff (autre suite d'écritures SID), plante, copie (copie fausse), - (non faite)
@@ -378,12 +380,28 @@ static unsigned zone(unsigned n, unsigned load, unsigned end)
 
 struct passage { int ok_init, ok_play; unsigned long long init_cyc, play_max, hash; unsigned long sid_early, sidw; unsigned port_init, port_play; };
 
+/* Fabrication du morceau modifié (§5.4), identique à celle du serveur : la copie (32 octets en rz) reste telle quelle
+ * (à zéro), les relais suivent, chaque site devient JSR vers son relais. Utilisée par emuler() et par --dump. */
+static void fabriquer(unsigned char *m, const struct site *rel, unsigned nrel, unsigned rz)
+{
+    unsigned k;
+    for (k = 0; k < nrel; k++) {
+        unsigned short ad = rel[k].ad, st = (unsigned short)(rz + 32 + 7 * k);
+        unsigned short base = (unsigned short)(m[(unsigned short)(ad + 1)] | (m[(unsigned short)(ad + 2)] << 8));
+        unsigned short cp = (unsigned short)(rz + (base & 0x1F));
+        m[st] = rel[k].op; m[st + 1] = (unsigned char)base; m[st + 2] = (unsigned char)(base >> 8);
+        m[st + 3] = rel[k].op; m[st + 4] = (unsigned char)cp; m[st + 5] = (unsigned char)(cp >> 8);
+        m[st + 6] = 0x60;
+        m[ad] = 0x20; m[ad + 1] = (unsigned char)st; m[ad + 2] = (unsigned char)(st >> 8);
+    }
+}
+
 /* Une émulation complète (init + appels de play). patch : sites remplacés par JSR vers le bloc de relais en rz (§5.1). */
 static struct passage emuler(const unsigned char *buf, unsigned n, unsigned off, unsigned load, unsigned init, unsigned play,
                              unsigned song, unsigned fps, unsigned calls, const struct site *rel, unsigned nrel, unsigned rz)
 {
     struct passage r;
-    unsigned i, k;
+    unsigned i;
     unsigned long long t0, d;
     memset(&r, 0, sizeof r);
     r.ok_play = 1;
@@ -393,15 +411,7 @@ static struct passage emuler(const unsigned char *buf, unsigned n, unsigned off,
     memset(lastreg, 0, sizeof lastreg);
     for (i = lo; i < 0xD000; i++) ram[i] = 0xEA;
     if (off < n) memcpy(ram + load, buf + off, (n - off) > 65536 - load ? 65536 - load : n - off);
-    for (k = 0; k < nrel; k++) {          /* fabrication identique à celle du serveur (§5.4) */
-        unsigned short ad = rel[k].ad, st = (unsigned short)(rz + 32 + 7 * k);
-        unsigned short base = (unsigned short)(ram[(unsigned short)(ad + 1)] | (ram[(unsigned short)(ad + 2)] << 8));
-        unsigned short cp = (unsigned short)(rz + (base & 0x1F));
-        ram[st] = rel[k].op; ram[st + 1] = (unsigned char)base; ram[st + 2] = (unsigned char)(base >> 8);
-        ram[st + 3] = rel[k].op; ram[st + 4] = (unsigned char)cp; ram[st + 5] = (unsigned char)(cp >> 8);
-        ram[st + 6] = 0x60;
-        ram[ad] = 0x20; ram[ad + 1] = (unsigned char)st; ram[ad + 2] = (unsigned char)(st >> 8);
-    }
+    fabriquer(ram, rel, nrel, rz);
     ram[0x02A6] = fps == 60 ? 0 : 1;
     fl_client = fl_save = fl_badexec = fl_jam = fl_brk = 0;
     first_bad = 0; rd02a6 = 0; sidw_total = 0; sidhash = 14695981039346656037ULL;
@@ -439,6 +449,7 @@ int main(int argc, char **argv)
     char path[512];
     static unsigned char buf[70000];
     if (argc > 1) lo = (unsigned)strtoul(argv[1], 0, 16);
+    const char *dump = argc > 4 && !strcmp(argv[3], "--dump") ? argv[4] : 0;
     if (argc > 1 && !strcmp(argv[1], "--version")) { printf("%d\n", SCAN_VERSION); return 0; }
     snprintf(path, sizeof path, "%s/.local/share/vice/C64/kernal-901227-03.bin", home);
     if (!(f = fopen(path, "rb")) || fread(kernal, 1, 8192, f) != 8192) { fprintf(stderr, "ROM KERNAL introuvable\n"); return 1; }
@@ -521,6 +532,17 @@ int main(int argc, char **argv)
                     if (ram[rz + k] != lastreg[k]) { ver = "copie"; break; }
         }
 
+        if (dump && nrel && end < 0x10000) {
+            static unsigned char m[65536];
+            FILE *o;
+            memset(m, 0, sizeof m);
+            memcpy(m + load, buf + off, end + 1 - load);
+            fabriquer(m, rel, nrel, rz);
+            snprintf(path, sizeof path, "%s/%s.code", dump, id);
+            if ((o = fopen(path, "wb"))) { fwrite(m + load, 1, end + 1 - load, o); fclose(o); }
+            snprintf(path, sizeof path, "%s/%s.relay", dump, id);
+            if ((o = fopen(path, "wb"))) { fwrite(m + rz, 1, rlen, o); fclose(o); }
+        }
         printf("%s|%u|%s|%s|%d|%04X|%u|%d|%u|%llu|%llu|%02X|%02X|%d|%s|%s|%s\n",
                id, song, raison[0] ? "ko" : "ok", raison, complet, rz, rlen, nsites, nrel,
                r1.init_cyc, r1.play_max, r1.port_init, r1.port_play, rd02a6, ver, relais, autres);
