@@ -13,12 +13,13 @@ Usage : python3 fix_bad_tunes.py [jukebox.db]
 import sqlite3, sys
 from pathlib import Path
 db = sys.argv[1] if len(sys.argv) > 1 else "jukebox.db"
-md5s = [l.split()[0].lower() for l in Path(__file__).with_name("bad_tunes.txt").read_text(encoding="utf-8").splitlines()
-        if l.strip() and l[0] != "#"]
+lignes = [l for l in Path(__file__).with_name("bad_tunes.txt").read_text(encoding="utf-8").splitlines() if l.strip() and l[0] != "#"]
+md5s = {l.split()[0].lower(): ("known_bad_v2" if l.rstrip().endswith("[v2]") else "known_bad") for l in lignes}
 c = sqlite3.connect(db)
 n = 0
-for m in md5s:
-    n += c.execute("UPDATE tunes SET compatible=0, reject='known_bad' WHERE compatible=1 AND md5=?", (m,)).rowcount
+for m, r in md5s.items():      # « [v2] » en fin de ligne : écarté pour les clients v1 seulement (raison known_bad_v2)
+    n += c.execute("UPDATE tunes SET compatible=0, reject=? WHERE md5=? AND (compatible=1 OR reject IN ('known_bad', 'known_bad_v2'))"
+                   " AND reject IS NOT ?", (r, m, r)).rowcount
 c.commit()
-print(n, "morceau(x) écarté(s) sur", len(md5s), "listé(s)")
+print(n, "morceau(x) mis à jour sur", len(md5s), "listé(s)")
 print(c.execute("SELECT SUM(compatible) FROM tunes").fetchone()[0], "morceaux jouables")

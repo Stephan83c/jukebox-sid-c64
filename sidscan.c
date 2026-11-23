@@ -11,7 +11,9 @@
  *   --dump : pour chaque morceau relayé, écrit DOSSIER/id.code (octets chargement..fin, sites remplacés) et DOSSIER/id.relay
  *   (bloc de relais), fabriqués par la même fonction que la 2e émulation : référence des tests du serveur (étape 2).
  * Sortie, une ligne par morceau :
- *   id|sous-morceau|verdict|raison|complet|relay_addr(hex)|relay_len|nsites|nrelais|init_cycles|play_max|port_init|port_play|lit_02a6|verif|relais|autres
+ *   id|sous-morceau|verdict|raison|complet|relay_addr(hex)|relay_len|nsites|nrelais|init_cycles|play_max|port_init|port_play|lit_02a6|verif|relais|autres|v1_risque
+ *   v1_risque (décision D9, §6.2 : morceaux à ne plus envoyer aux clients v1.x), somme de : 1 = écrit $028F/$0290 (KEYLOG),
+ *   2 = écrit dans $0314-$0333 (vecteurs du KERNAL), 4 = laisse $01 avec la ROM BASIC visible après init ou play
  *   verif (2e émulation avec les relais en place) : ok, diff (autre suite d'écritures SID), plante, copie (copie fausse), - (non faite)
  *   verdict = ok ou ko ; relais = « adresse:opcode » dans l'ordre des relais ; autres = « adresse:opcode:raison » (sites non relayés :
  *   mode, copie = code recopié hors des octets envoyés, miroir, smc = octets réécrits, data = octets relus, saut = saut au milieu, trop).
@@ -22,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SCAN_VERSION 1          /* à changer à chaque modification de l'outil ou de la carte mémoire du client (§4.3) */
+#define SCAN_VERSION 2          /* à changer à chaque modification de l'outil ou de la carte mémoire du client (§4.3) */
 #define PAL_CPS 985248ULL       /* cycles par seconde (PAL) */
 #define LINE_CYC 63ULL
 #define LINES 312ULL
@@ -42,7 +44,7 @@ static unsigned long long cycles;
 static unsigned lo = 0xAF00;
 static int fl_client, fl_save, fl_badexec, fl_jam, fl_brk;
 static unsigned first_bad;
-static int rd02a6, infetch;
+static int rd02a6, infetch, v1r;
 static unsigned long sidw_call, sidw_total;
 static unsigned long long sidhash;      /* empreinte de la suite des écritures SID (registre, valeur) */
 static unsigned char lastreg[32];
@@ -139,6 +141,8 @@ static void wr(unsigned short ad, unsigned char v)
         return;
     }
     acc[ad] |= A_W;
+    if (ad == 0x028F || ad == 0x0290) v1r |= 1;
+    else if (ad >= 0x0314 && ad <= 0x0333) v1r |= 2;
     if (ad >= lo && ad < 0xD000) bad(ad, &fl_client);
     else if ((ad >= 0xD100 && ad < 0xD400) || (ad >= 0xD800 && ad < 0xDC00) || ad >= 0xFFFA) bad(ad, &fl_save);
     ram[ad] = v;
@@ -378,7 +382,7 @@ static unsigned zone(unsigned n, unsigned load, unsigned end)
     return 0;
 }
 
-struct passage { int ok_init, ok_play; unsigned long long init_cyc, play_max, hash; unsigned long sid_early, sidw; unsigned port_init, port_play; };
+struct passage { int ok_init, ok_play; unsigned long long init_cyc, play_max, hash; unsigned long sid_early, sidw; unsigned port_init, port_play; int v1; };
 
 /* Fabrication du morceau modifié (§5.4), identique à celle du serveur : la copie (32 octets en rz) reste telle quelle
  * (à zéro), les relais suivent, chaque site devient JSR vers son relais. Utilisée par emuler() et par --dump. */
@@ -414,7 +418,7 @@ static struct passage emuler(const unsigned char *buf, unsigned n, unsigned off,
     fabriquer(ram, rel, nrel, rz);
     ram[0x02A6] = fps == 60 ? 0 : 1;
     fl_client = fl_save = fl_badexec = fl_jam = fl_brk = 0;
-    first_bad = 0; rd02a6 = 0; sidw_total = 0; sidhash = 14695981039346656037ULL;
+    first_bad = 0; rd02a6 = 0; v1r = 0; sidw_total = 0; sidhash = 14695981039346656037ULL;
     if (!verif) { nsites = 0; sites_over = 0; }
     cycles = 0; p = FI; a = x = y = 0;
 
@@ -422,6 +426,7 @@ static struct passage emuler(const unsigned char *buf, unsigned n, unsigned off,
     r.ok_init = call((unsigned short)init, (unsigned char)(song - 1), INIT_MAX);
     r.init_cyc = cycles - t0;
     r.port_init = port;
+    if ((port & 3) == 3) v1r |= 4;
     r.sid_early = sidw_total;
     if (r.ok_init && !fl_jam && !fl_brk && !fl_badexec && !fl_client && play)
         for (i = 0; i < calls && r.ok_play && !fl_jam && !fl_brk && !fl_badexec && !fl_client; i++) {
@@ -431,11 +436,13 @@ static struct passage emuler(const unsigned char *buf, unsigned n, unsigned off,
             d = cycles - t0 + (verif ? 0 : RELAY_COST * sidw_call);
             if (d > r.play_max) r.play_max = d;
             if (port != 0x36) r.port_play = port;
+            if ((port & 3) == 3) v1r |= 4;
             if (i + 1 == SILENT_CALLS) r.sid_early = sidw_total;
             cycles += 19656 - (cycles - t0) % 19656;   /* l'image suivante : le raster avance comme sur la machine */
         }
     if (calls < SILENT_CALLS) r.sid_early = sidw_total;
     r.hash = sidhash;
+    r.v1 = v1r;
     r.sidw = sidw_total;
     return r;
 }
@@ -469,7 +476,7 @@ int main(int argc, char **argv)
         if (!id || !fn) continue;
         song = sg ? (unsigned)atoi(sg) : 1;
         fps = fp ? (unsigned)atoi(fp) : 50;
-        if (!(f = fopen(fn, "rb"))) { printf("%s|%u|ko|absent|0|0000|0|0|0|0|0|00|00|0|-||\n", id, song); continue; }
+        if (!(f = fopen(fn, "rb"))) { printf("%s|%u|ko|absent|0|0000|0|0|0|0|0|00|00|0|-|||0\n", id, song); continue; }
         n = (unsigned)fread(buf, 1, sizeof buf, f);
         fclose(f);
         off = (buf[6] << 8) | buf[7];
@@ -543,9 +550,9 @@ int main(int argc, char **argv)
             snprintf(path, sizeof path, "%s/%s.relay", dump, id);
             if ((o = fopen(path, "wb"))) { fwrite(m + rz, 1, rlen, o); fclose(o); }
         }
-        printf("%s|%u|%s|%s|%d|%04X|%u|%d|%u|%llu|%llu|%02X|%02X|%d|%s|%s|%s\n",
+        printf("%s|%u|%s|%s|%d|%04X|%u|%d|%u|%llu|%llu|%02X|%02X|%d|%s|%s|%s|%d\n",
                id, song, raison[0] ? "ko" : "ok", raison, complet, rz, rlen, nsites, nrel,
-               r1.init_cyc, r1.play_max, r1.port_init, r1.port_play, rd02a6, ver, relais, autres);
+               r1.init_cyc, r1.play_max, r1.port_init, r1.port_play, rd02a6, ver, relais, autres, r1.v1);
         fflush(stdout);
     }
     return 0;

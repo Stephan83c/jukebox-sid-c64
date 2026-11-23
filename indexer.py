@@ -101,12 +101,14 @@ def parse_sid(data: bytes):
 UNPACKER_HEAD = bytes.fromhex("78a935850120")
 
 
-def load_bad_tunes() -> set:
-    """MD5 des morceaux écartés à la main (bad_tunes.txt, à côté de ce script)."""
+def load_bad_tunes() -> dict:
+    """MD5 des morceaux écartés à la main (bad_tunes.txt, à côté de ce script) -> True si la ligne finit par « [v2] »
+    (écarté pour les clients v1 seulement : raison « known_bad_v2 », servi par RANDOM3/GET3 si l'analyse l'accepte)."""
     p = Path(__file__).with_name("bad_tunes.txt")
     if not p.exists():
-        return set()
-    return {l.split()[0].lower() for l in p.read_text(encoding="utf-8").splitlines() if l.strip() and l[0] != "#"}
+        return {}
+    return {l.split()[0].lower(): l.rstrip().endswith("[v2]")
+            for l in p.read_text(encoding="utf-8").splitlines() if l.strip() and l[0] != "#"}
 
 
 BAD_TUNES = load_bad_tunes()
@@ -114,7 +116,7 @@ BAD_TUNES = load_bad_tunes()
 
 def reject_reason(info, size, a, md5="") -> str | None:
     if md5 in BAD_TUNES:
-        return "known_bad"      # écarté à la main : voir bad_tunes.txt
+        return "known_bad_v2" if BAD_TUNES[md5] else "known_bad"      # écarté à la main : voir bad_tunes.txt
     if info["format"] == "RSID" and not a.allow_rsid:
         return "rsid"
     if info["mus"]:

@@ -475,8 +475,8 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 | 2 | Serveur : `RANDOM3`/`GET3`, fabrication du bloc ; tests par `test_v3.py` (référence `sidscan --dump`, serveur local, relecture et contrôles §6.1) | octets identiques à la fabrication de référence. **Fait le 2026-11-22** : 43 974 morceaux avec relais identiques, 317 sans relais servis tels quels |
 | 3 | Client, lecteur seul (démo sans réseau) : appel §7.3, contrat §7.2, relais, vu-mètres, hauteur | banc VICE §9.2 vert sur toute la liste. **Fait le 2026-11-22** (`SIDBox2_C64/tools/banc.py`, 3 passages par morceau dont un dans l'autre norme) : 11 morceaux verts, *El Joe* refusé par l'analyse |
 | 4 | Client, réseau : UCI, délais §7.7, garde-fou §7.8 | §9.3 sauf endurance. **Pannes du serveur à chaque étape réseau : faites le 2026-11-23**, toutes tenues (`SIDBox2_C64/tools/panne.py`, détail dans `SIDBox2_C64/docs/etape4.md`) ; restent NTSC et endurance (étape 6) |
-| 5 | Mesure de taille, choix de `HISTART`, réindexation, `scan_version` | morceaux jouables comptés et comparés à la v1.9 |
-| 5 bis | Protection des clients v1.9 (D9, §6.2) : `sidscan` relève les écritures en `$028F/$0290` et `$0314-$0333` (nouvelle colonne, `scan_version` + 1) ; le serveur exclut ces morceaux et ceux qui laissent la ROM BASIC visible des commandes v1 ; `test_v3.py` le vérifie | nombre de morceaux retirés aux clients v1.9 mesuré et accepté par l'utilisateur, test vert |
+| 5 | Mesure de taille, choix de `HISTART`, réindexation, `scan_version` | morceaux jouables comptés et comparés à la v1.9. **Fait le 2026-11-23** : `HISTART = $AF00` (D2), cohérence vérifiée par `test_v3.py` (`server.py`, `scan_db.py`, `update_db.sh`, `memmap.asm`) ; 78 morceaux réintégrés en v2 (`known_bad_v2`, repère `[v2]` de `bad_tunes.txt`) ; servis : v2.0 44 369, v1.9 44 390 avant D9 |
+| 5 bis | Protection des clients v1.9 (D9, §6.2) : `sidscan` relève les écritures en `$028F/$0290` et `$0314-$0333` (nouvelle colonne, `scan_version` + 1) ; le serveur exclut ces morceaux et ceux qui laissent la ROM BASIC visible des commandes v1 ; `test_v3.py` le vérifie | nombre de morceaux retirés aux clients v1.9 mesuré et accepté par l'utilisateur, test vert. **Fait le 2026-11-23** (analyse v2, colonne `v1_risque`) : 683 retirés aux clients v1 (KEYLOG 529, vecteurs 4, ROM BASIC 140 parmi les acceptés), v1.9 servi 43 707 ; `test_v3.py` vert. Acceptation de l'utilisateur : en attente |
 | 6 | Endurance, NTSC, docs (README FR/EN, HISTORY), mise à jour du VPS par l'utilisateur, release v2.0 | §9.3 complet |
 
 ---
@@ -486,7 +486,7 @@ relevés automatiques : le lecteur tourne toujours, le temps avance, retour prop
 | # | Question | Proposition |
 |---|---|---|
 | D1 | Client | **Décidé le 2026-11-22 : SIDBox2 (`~/Projet_C64/SIDBox2_C64`), tout en assembleur Kick Assembler.** Le lecteur v1.8 y est déjà porté à l'identique (étape 1 de SIDBox2) ; il sera adapté au §7 (appel en `$C000-$CFFF`, relais, contrat d'état) |
-| D2 | `HISTART` | décidé à l'étape 5 ; la règle §7.1 impose au moins `$C000-$CFFF` pour le lecteur |
+| D2 | `HISTART` | **Décidé le 2026-11-23 : `$AF00`, comme en v1.9.** Écarté : client sous le KERNAL (`$E000-$F3FF`) et `HISTART = $C000`, +770 morceaux (+1,7 %) pour une refonte du client et de nouveaux tests |
 | D3 | Morceaux sans relais complet (2,3 %) | **Décidé le 2026-11-22 : joués en direct (son exact), relais partiels, vu-mètres incomplets, pas de correction de hauteur, champ `complet = 0`** (§5.5) |
 | D4 | Horloge des délais réseau indépendante de l'IRQ | horloge TOD du CIA1 (fréquence à vérifier sur le C64U) ou comptage de lignes raster |
 | D5 | Fronts de gate dans les relais | à faire si la place le permet (relais de contrôle de 10 octets) |

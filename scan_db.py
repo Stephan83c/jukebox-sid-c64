@@ -28,7 +28,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 COLS = ("tune_id song verdict reject complet relay_addr relay_len nsites nrelais init_cycles play_max "
-        "port_init port_play lit_02a6 verif relais autres").split()
+        "port_init port_play lit_02a6 verif relais autres v1_risque").split()
 
 SCHEMA = """CREATE TABLE IF NOT EXISTS scan (
     tune_id INTEGER NOT NULL, song INTEGER NOT NULL,
@@ -44,6 +44,7 @@ SCHEMA = """CREATE TABLE IF NOT EXISTS scan (
     verif TEXT,                     -- 2e émulation avec les relais : ok, diff, plante, copie, -
     relais TEXT,                    -- « adresse:opcode » dans l'ordre des relais (ce que le serveur remplace)
     autres TEXT,                    -- sites non relayés « adresse:opcode:raison »
+    v1_risque INTEGER,              -- D9 : 1 KEYLOG $028F/$0290, 2 vecteurs $0314-$0333, 4 ROM BASIC visible (à refuser aux clients v1)
     PRIMARY KEY (tune_id, song, scan_version, histart, calls))"""
 
 
@@ -62,7 +63,9 @@ def main():
     histart = int(a.histart, 16)
     con = sqlite3.connect(a.db)
     con.execute(SCHEMA)
-    q = ("SELECT id, path, start_song, clock FROM tunes WHERE (compatible = 1 OR reject = 'known_bad')")
+    if "v1_risque" not in [r[1] for r in con.execute("PRAGMA table_info(scan)")]:     # base de la version 1 de l'analyse
+        con.execute("ALTER TABLE scan ADD COLUMN v1_risque INTEGER")
+    q = ("SELECT id, path, start_song, clock FROM tunes WHERE (compatible = 1 OR reject IN ('known_bad', 'known_bad_v2'))")
     args = ()
     if a.ids:
         ids = [int(i) for i in a.ids.split(",")]
@@ -100,9 +103,10 @@ def main():
         recs.append((int(d["tune_id"]), int(d["song"]), version, histart, a.calls, d["verdict"], d["reject"] or None,
                      int(d["complet"]), int(d["relay_addr"], 16), int(d["relay_len"]), int(d["nsites"]), int(d["nrelais"]),
                      int(d["init_cycles"]), int(d["play_max"]), int(d["port_init"], 16), int(d["port_play"], 16),
-                     int(d["lit_02a6"]), d["verif"], d["relais"], d["autres"]))
+                     int(d["lit_02a6"]), d["verif"], d["relais"], d["autres"], int(d["v1_risque"])))
     with con:
-        con.executemany("INSERT OR REPLACE INTO scan VALUES (%s)" % ",".join("?" * 20), recs)
+        con.executemany("INSERT OR REPLACE INTO scan (tune_id, song, scan_version, histart, calls, %s) VALUES (%s)"
+                        % (", ".join(COLS[2:]), ",".join("?" * 21)), recs)
 
     n = len(recs)
     ok = [r for r in recs if r[5] == "ok"]
@@ -115,6 +119,9 @@ def main():
     print("vérification (2e émulation) : %s" % dict(Counter(r[17] for r in ok)))
     print("lisent $02A6 : %d ; laissent $01 modifié : %d"
           % (sum(1 for r in ok if r[16]), sum(1 for r in ok if r[14] != 0x36 or r[15] != 0x36)))
+    v1 = [r for r in ok if r[20]]
+    print("à refuser aux clients v1 (D9) : %d ; KEYLOG %d, vecteurs %d, ROM BASIC visible %d"
+          % (len(v1), sum(1 for r in v1 if r[20] & 1), sum(1 for r in v1 if r[20] & 2), sum(1 for r in v1 if r[20] & 4)))
 
 
 if __name__ == "__main__":

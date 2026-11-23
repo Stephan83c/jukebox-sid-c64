@@ -155,6 +155,13 @@ class Jukebox:
         if self.con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='scan'").fetchone():
             self.scan_version = self.con.execute("SELECT MAX(scan_version) FROM scan WHERE histart=? AND calls=?",
                                                  (SCAN_HISTART, SCAN_CALLS)).fetchone()[0]
+        # Protection des clients v1.x (D9, §6.2) : les commandes v1 ne servent pas les morceaux qui font planter leur lecteur
+        # (v1_risque relevé par sidscan à partir de la version 2 de l'analyse). Sans cette colonne : servis comme avant.
+        self.v1_where, self.v1_args = "", ()
+        if self.scan_version is not None and "v1_risque" in [r[1] for r in self.con.execute("PRAGMA table_info(scan)")]:
+            self.v1_where = (" AND NOT EXISTS (SELECT 1 FROM scan s WHERE s.tune_id = tunes.id AND s.song = tunes.start_song"
+                             " AND s.scan_version = ? AND s.histart = ? AND s.calls = ? AND s.v1_risque > 0)")
+            self.v1_args = (self.scan_version, SCAN_HISTART, SCAN_CALLS)
 
     @property
     def scroll(self) -> Path | None:
@@ -213,14 +220,16 @@ class Jukebox:
             like = f"%{esc}%"
             return self.con.execute(
                 "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? AND (fold(author) LIKE ? ESCAPE '\\' OR fold(title) LIKE ? ESCAPE '\\')"
-                " ORDER BY RANDOM() LIMIT 1", (max_addr, like, like)).fetchone()
+                + self.v1_where + " ORDER BY RANDOM() LIMIT 1", (max_addr, like, like) + self.v1_args).fetchone()
         return self.con.execute(
-            "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=? ORDER BY RANDOM() LIMIT 1", (max_addr,)).fetchone()
+            "SELECT * FROM tunes WHERE compatible=1 AND end_addr<=?" + self.v1_where + " ORDER BY RANDOM() LIMIT 1",
+            (max_addr,) + self.v1_args).fetchone()
 
     SELECT3 = ("SELECT t.*, s.complet AS s_complet, s.relay_addr, s.relay_len, s.nrelais, s.verif, s.relais AS s_relais"
                " FROM tunes t JOIN scan s ON s.tune_id = t.id AND s.song = t.start_song"
                " AND s.scan_version = ? AND s.histart = ? AND s.calls = ?"
-               " WHERE t.compatible = 1 AND s.verdict = 'ok'")
+               " WHERE (t.compatible = 1 OR t.reject = 'known_bad_v2') AND s.verdict = 'ok'")
+    # known_bad_v2 : écartés à la main pour les clients v1 mais acceptés en v2 (repère [v2] dans bad_tunes.txt, §6.2)
 
     def pick3(self, pattern: str | None, max_addr: int):
         args = [self.scan_version, SCAN_HISTART, SCAN_CALLS, max_addr]
@@ -236,7 +245,8 @@ class Jukebox:
                                 (self.scan_version, SCAN_HISTART, SCAN_CALLS, tune_id)).fetchone()
 
     def get(self, tune_id: int):
-        return self.con.execute("SELECT * FROM tunes WHERE id=? AND compatible=1", (tune_id,)).fetchone()
+        return self.con.execute("SELECT * FROM tunes WHERE id=? AND compatible=1" + self.v1_where,
+                                (tune_id,) + self.v1_args).fetchone()
 
     def stats(self):
         return self.con.execute("SELECT SUM(compatible), COUNT(*) FROM tunes").fetchone()

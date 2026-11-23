@@ -1,6 +1,8 @@
 # Morceaux écartés à la main (MD5 du fichier .sid, puis un commentaire). Lu par indexer.py (raison « known_bad »)
 # et par fix_bad_tunes.py (pour corriger une base existante sans réindexer).
-1942310b7068f060d9e21a97cc1a53bb  Riparian (Goto80) : init attend $D012 alors que les E/S sont en RAM, le C64 se fige à 00:00
+# Repère « [v2] » en fin de ligne : écarté pour les clients v1 seulement (raison known_bad_v2) ; servi aux clients v2.0
+# (RANDOM3/GET3) si l'analyse sidscan l'accepte. Les 77 « initlong » viennent du lecteur v1 (E/S en RAM pendant init).
+1942310b7068f060d9e21a97cc1a53bb  Riparian (Goto80) : init attend $D012 alors que les E/S sont en RAM, le C64 se fige à 00:00 [v2]
 fb2459ae5349f285c3c97e3526e36e6a  City of Love (Extended Edition) (Flotsam) : fige le vrai C64U à 00:00, joue bien dans VICE, cause inconnue (2026-11-21)
 
 # Écartés par sidcheck (émulation du lecteur, 2026-11-22) : client = écrit dans le client ($AF00-$CFFF), exec = y exécute du code,
@@ -10,7 +12,7 @@ fb2459ae5349f285c3c97e3526e36e6a  City of Love (Extended Edition) (Flotsam) : fi
 d4f0f69c16b169b01a39f12f42d6d0d3  Crosshatch (Matthias Kramm (Quiss)) : sidcheck playlong 0000
 23c92963d26aa65acbfbffeb1c8c456c  I'm Number One (Dakotah Lamb) : sidcheck client CFD3
 b7b9a60c765e24923b0a94318e054a9a  In the South African (Potentialing) : sidcheck client CFD3
-cf0dfa34d4a4b09ebb242df366e14690  Kukle (Krzysztof Iwanowski (ARRGH!BYTE)) : sidcheck initlong 0000
+cf0dfa34d4a4b09ebb242df366e14690  Kukle (Krzysztof Iwanowski (ARRGH!BYTE)) : sidcheck initlong 0000 [v2]
 df16cca96d0994f2cc30f95801bbeb07  learnanewsoundchipin10min (Hiller Farias (pedipanol)) : sidcheck client CFD3
 a124ea4c994c41346b71853fef69fea5  Miracle Witch Cassava (Potentialing) : sidcheck client CFD3
 2a6be7ac7b115797c35a43048ce04a4a  Myn Badkeamer (Ari Vermette (kinkinkijkin)) : sidcheck client CFD3
@@ -19,9 +21,9 @@ a722d998a7f6921f02d45ccd5ebd10f4  Renegade for Life (Digitalpcock) : sidcheck cl
 c63bf013c0c9b133b3bf082cc967ac8b  SID the Science Kid (CuteEwok) : sidcheck client CFD3
 d008e68ef4eda3675c90c277f849f522  Sidman (acmfan) : sidcheck client CFD3
 bbc6188eb24efe3b262b5c0f8365e86c  Whoops (Krzysztof Dobrzyniecki (mallo)) : sidcheck client CFD3
-4680d6abdfae3a9deb97bcf2fc79fb24  50Sixx-6 02 (<?>) : sidcheck initlong 0000
+4680d6abdfae3a9deb97bcf2fc79fb24  50Sixx-6 02 (<?>) : sidcheck initlong 0000 [v2]
 9bbfbbeebb9429bf90de0c22489030ec  Chevytech (<?>) : sidcheck client C001
-c6e0628928d69c2970b34be9aa43fbcf  Essentials (tune 11) (<?>) : sidcheck initlong 0000
+c6e0628928d69c2970b34be9aa43fbcf  Essentials (tune 11) (<?>) : sidcheck initlong 0000 [v2]
 54d0290c3e2819aa222f23c7fa504fab  Floppy Disk Construction Set (<?>) : sidcheck brk 0000
 03968eb1e78a0432ac0823949c996500  Amazon Warrior (Geoff Sumner) : sidcheck client CFFE
 b57b4a28e4fdb73bdee7cc2c059b508d  Bumble-Bee (Pawel Raszkowski) : sidcheck client C100
@@ -51,7 +53,7 @@ bf42dce98b5efe38db280e739556a9a0  Penetrator (Andrián Pertout) : sidcheck clien
 b2c7d110a3b107fedcb6bceff116089f  The Railroad Works (John Wentworth) : sidcheck client C800
 4938b16f53cef51a2bacdfbbbd572164  Security Alert (David Schröder & Mike Livesay) : sidcheck client CB09
 82f5f5186e0f5c5f0fff1173834dbd38  Skramble (Nigel Rowlan <?>) : sidcheck client CC18
-472aca4a0b55d771e8f66e347981eb61  Slotshot (Adam Wallner) : sidcheck initlong 0000
+472aca4a0b55d771e8f66e347981eb61  Slotshot (Adam Wallner) : sidcheck initlong 0000 [v2]
 31180a3b464200e056c92ec5cbbf60ea  Star Trader (<?>) : sidcheck client exec C400
 5d9e71f49bf07354f70a7dd1ba295ad4  Street Sports Baseball (<?>) : sidcheck client C380
 bfe47628e31c671791c86ec1a11f4042  Trivia! v2.0 (John Byrd) : sidcheck client exec C000
@@ -115,46 +117,46 @@ a595c0042e55ae4a2787f5316f22ec09  Footballer of the Year 2 (Ben Daglish) : sidch
 1cc12e911b9a4fc1bc811e03fb749395  Narco Police (SFX) (Charles Deenen) : sidcheck client C190
 b6306ae46fac4de88e60aa49f077845e  Synex (Yavuz Sükür) : sidcheck client exec B800
 40a7c8da440c1f7c55c59dcf6ca987c4  Warm Up (Ivan Del Duca) : sidcheck client exec B900
-27180f6c3bcbdba324f0ff8dcd576cbe  4 Red Calx (slo) (Martin Demsky) : sidcheck initlong 0000
-8ed4faf476b6759e0cbdad465a0b5585  Acid Bassline (Martin Demsky) : sidcheck initlong 0000
-3f14b9cf294ae092d1001509b9545cd6  Aeromobil (Martin Demsky) : sidcheck initlong 0000
-84cb6ffddd02b538f0e4e2b965e1f502  Awakening (Martin Demsky) : sidcheck initlong 0000
-14f1f5c42c42b50c38366023e7691774  Cave (Martin Demsky) : sidcheck initlong 0000
-0619843587a6a5ca482010e099dc7508  Cents (Martin Demsky) : sidcheck initlong 0000
-5e64f441a08d8801c72bba4828ac6ff1  Crazy Intro (Martin Demsky) : sidcheck initlong 0000
-50d26118cafbcbed163d86437e9d202b  Filters (Martin Demsky) : sidcheck initlong 0000
-f8f4e390432f3de2803a973f170babb0  The Final Fight (Martin Demsky) : sidcheck initlong 0000
-128e6c16ea32a5028674cde489bf2fe3  Halley's Comet (Martin Demsky) : sidcheck initlong 0000
-dec687fa9860954082770c8019b131c4  Happy New Year (Martin Demsky) : sidcheck initlong 0000
-ce8d283068f487f3912272efcfbe8bf9  Jazzy Ocean (Martin Demsky) : sidcheck initlong 0000
-2e9064f0340165e643a7460ed9f6e115  Loader (Martin Demsky) : sidcheck initlong 0000
-4f6085ec678a32c33272fada1e67c719  Minimal (Martin Demsky) : sidcheck initlong 0000
-27b14892f4d7987636b5b41afa979f60  Monster (Martin Demsky) : sidcheck initlong 0000
-eebd77c1d819c66385114a65db9581c9  Morse Code (Martin Demsky) : sidcheck initlong 0000
-644f1218d34bd2b411c26f00efd24a89  Psytrance (Martin Demsky) : sidcheck initlong 0000
-2d8882b13236af23522df5e706e857e3  Ringmod Noisecore (Martin Demsky) : sidcheck initlong 0000
-a30be841bccfc456574a5b8c656eb753  Sandstorm (Martin Demsky) : sidcheck initlong 0000
-daa5080e606b6e5deb830c94da3c7994  Scoring Points (Martin Demsky) : sidcheck initlong 0000
-cc9ec0dcd0fa71b803a4d848f890acf9  Secret Engine (Martin Demsky) : sidcheck initlong 0000
-7fbc8f82bfad84a9dd15a89bc92a05a3  Timescape (Martin Demsky) : sidcheck initlong 0000
-35887a06723029933891b94c644cfbdc  To Be C64tinued (Martin Demsky) : sidcheck initlong 0000
-25c5048db2c4c6b45b3851f4f07a971e  Underground (Martin Demsky) : sidcheck initlong 0000
-1550a4c74e0c666535038cb9b485a084  Vangelis Is Not Dead (Martin Demsky) : sidcheck initlong 0000
-4d80f60d3363e3cfae47d29eceef0e80  Wasps (Martin Demsky) : sidcheck initlong 0000
+27180f6c3bcbdba324f0ff8dcd576cbe  4 Red Calx (slo) (Martin Demsky) : sidcheck initlong 0000 [v2]
+8ed4faf476b6759e0cbdad465a0b5585  Acid Bassline (Martin Demsky) : sidcheck initlong 0000 [v2]
+3f14b9cf294ae092d1001509b9545cd6  Aeromobil (Martin Demsky) : sidcheck initlong 0000 [v2]
+84cb6ffddd02b538f0e4e2b965e1f502  Awakening (Martin Demsky) : sidcheck initlong 0000 [v2]
+14f1f5c42c42b50c38366023e7691774  Cave (Martin Demsky) : sidcheck initlong 0000 [v2]
+0619843587a6a5ca482010e099dc7508  Cents (Martin Demsky) : sidcheck initlong 0000 [v2]
+5e64f441a08d8801c72bba4828ac6ff1  Crazy Intro (Martin Demsky) : sidcheck initlong 0000 [v2]
+50d26118cafbcbed163d86437e9d202b  Filters (Martin Demsky) : sidcheck initlong 0000 [v2]
+f8f4e390432f3de2803a973f170babb0  The Final Fight (Martin Demsky) : sidcheck initlong 0000 [v2]
+128e6c16ea32a5028674cde489bf2fe3  Halley's Comet (Martin Demsky) : sidcheck initlong 0000 [v2]
+dec687fa9860954082770c8019b131c4  Happy New Year (Martin Demsky) : sidcheck initlong 0000 [v2]
+ce8d283068f487f3912272efcfbe8bf9  Jazzy Ocean (Martin Demsky) : sidcheck initlong 0000 [v2]
+2e9064f0340165e643a7460ed9f6e115  Loader (Martin Demsky) : sidcheck initlong 0000 [v2]
+4f6085ec678a32c33272fada1e67c719  Minimal (Martin Demsky) : sidcheck initlong 0000 [v2]
+27b14892f4d7987636b5b41afa979f60  Monster (Martin Demsky) : sidcheck initlong 0000 [v2]
+eebd77c1d819c66385114a65db9581c9  Morse Code (Martin Demsky) : sidcheck initlong 0000 [v2]
+644f1218d34bd2b411c26f00efd24a89  Psytrance (Martin Demsky) : sidcheck initlong 0000 [v2]
+2d8882b13236af23522df5e706e857e3  Ringmod Noisecore (Martin Demsky) : sidcheck initlong 0000 [v2]
+a30be841bccfc456574a5b8c656eb753  Sandstorm (Martin Demsky) : sidcheck initlong 0000 [v2]
+daa5080e606b6e5deb830c94da3c7994  Scoring Points (Martin Demsky) : sidcheck initlong 0000 [v2]
+cc9ec0dcd0fa71b803a4d848f890acf9  Secret Engine (Martin Demsky) : sidcheck initlong 0000 [v2]
+7fbc8f82bfad84a9dd15a89bc92a05a3  Timescape (Martin Demsky) : sidcheck initlong 0000 [v2]
+35887a06723029933891b94c644cfbdc  To Be C64tinued (Martin Demsky) : sidcheck initlong 0000 [v2]
+25c5048db2c4c6b45b3851f4f07a971e  Underground (Martin Demsky) : sidcheck initlong 0000 [v2]
+1550a4c74e0c666535038cb9b485a084  Vangelis Is Not Dead (Martin Demsky) : sidcheck initlong 0000 [v2]
+4d80f60d3363e3cfae47d29eceef0e80  Wasps (Martin Demsky) : sidcheck initlong 0000 [v2]
 3425265edd833cd5edae298a5345dd13  The Darksword (Thomas Detert) : sidcheck client exec AF00
 15c948309c1af48d1e5d7f6df3823eff  Eon (Thomas Detert) : sidcheck client exec B000
 d57000e7d4b64980c9e80782af6b73b6  Genloc (Thomas Detert) : sidcheck client exec BA70
 552d3cb1fac681bb26ae561d0dcd71e5  Mega Starforce (Thomas Detert) : sidcheck client exec B000
 59892d0a65b11f533639b3a733fbcd5f  Parsec (Thomas Detert) : sidcheck vect FFFA
-9337fb660b7172b7699110a9eb77d093  2Manu3L (Dennis Malmros (Deazipan)) : sidcheck initlong 0000
-fec3beb10c16456071f8448aea003574  Datatraveler Dub (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-64a5a254b16af88ec44f49201d564080  Favourite Frak (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-d287ebba8e6e9d1061010be222fa95f3  Khao Noi Street Beat (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-1b2f458229f462624be32feec55b25f9  Khao Takiab Acid (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-39f91dbe8bdd00216f4bd2a7523894c2  No Beat Khao Noi Dub (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-962b23934dd55557772324f3857bb1b4  Sailing Away (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-7f5c48710b5b6c3339d5a5f79d3737a6  Short Dream (Dennis Malmros (Dex-D)) : sidcheck initlong 0000
-5eb17466ef23030f6089dfc6283b9d9e  Skev grejj (Dennis Malmros (Deazipan)) : sidcheck initlong 0000
+9337fb660b7172b7699110a9eb77d093  2Manu3L (Dennis Malmros (Deazipan)) : sidcheck initlong 0000 [v2]
+fec3beb10c16456071f8448aea003574  Datatraveler Dub (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+64a5a254b16af88ec44f49201d564080  Favourite Frak (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+d287ebba8e6e9d1061010be222fa95f3  Khao Noi Street Beat (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+1b2f458229f462624be32feec55b25f9  Khao Takiab Acid (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+39f91dbe8bdd00216f4bd2a7523894c2  No Beat Khao Noi Dub (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+962b23934dd55557772324f3857bb1b4  Sailing Away (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+7f5c48710b5b6c3339d5a5f79d3737a6  Short Dream (Dennis Malmros (Dex-D)) : sidcheck initlong 0000 [v2]
+5eb17466ef23030f6089dfc6283b9d9e  Skev grejj (Dennis Malmros (Deazipan)) : sidcheck initlong 0000 [v2]
 119c02191a0013b2dbad8bb4c43e4658  Mongo (C64 version) (djmaximum) : sidcheck client CFD3
 078d41afb650dcd63144f4f02ccc56cd  Tonido (Kjetil Nystuen (Dr. Coldcut)) : sidcheck client B000
 3088d071eb54c49b3394092bc01e3211  Archon (Tommy V. Dunbar) : sidcheck client BF4C
@@ -164,34 +166,34 @@ ba7295ae56760c259dfbbdd64d27275d  Hook (Jonathan Dunn) : sidcheck client exec C0
 25936a1eaa28926d9076959ab8baf2ce  The Neon Nights (Juha Granberg & Sami Seppä(Rock)) : sidcheck client CFFF
 eafef6dd13a9bf09652ea6bb7c0e879e  Shorty (Juha Granberg (FCS)) : sidcheck client CFFF
 8e1591c08aa42bf8c446010d19ec4989  On Field Football (v2) (John A. Fitzpatrick) : sidcheck client C000
-eda99ea87be7d2b117aaf11df985885c  Higher Scores (Mats (Frantic)) : sidcheck initlong 0000
+eda99ea87be7d2b117aaf11df985885c  Higher Scores (Mats (Frantic)) : sidcheck initlong 0000 [v2]
 b6976e76db80c22c3f8a87f5138010ce  Athena (Martin Galway) : sidcheck client exec C000
 017e3b4b60780bc3e5726cf0fdab8e15  Comic Bakery (Martin Galway) : sidcheck client C008
 feb8c7e8ed1f6720889db9cdeb63d44a  Afterburner (Adam Gilmore) : sidcheck client B43B
 5446d422936164e1edb34e451c2bc971  Infinirail (Jeroen Gildemacher (Goerp)) : sidcheck client C5A8
-9768f11da798ef2c48345f1d29cafeff  20 Years Is Nothing (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-90ee76a4f7180bebf724f5e24c60403a  Acidburger (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-9f6a74b0009233f3b3f8408a5b4653fd  Antispeed (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-59f1bb91e85522c9750a2bda837925e1  Birds on Fire (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-710ee5b23fc14201cb6e306a0eed7136  Birds on Fire (note) (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-07a51823d9badd2003d868e2de78cb3b  Bow Down (tune 3) (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-620ecb3929225e88306a5fc4ef336201  Dansa in (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-342b9456ac37d6c0979998bc08dc73c8  Evil Wizard 2 (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-4421e2b2f5fd43adca889cc9f0885dbc  The Great Ballad of the Storm... (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-5c1289554f3671ace300ae55d4eeb6fa  In Memory of (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-ec7a79cc7e81b0eeb5e459ef33ed4c0b  In the Name of the Sword (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-8baef092d59c0844ed1b407f12d60524  Megademo 7 (tune 1) (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-d5a2a7301e0a9037ad23487bc5b787fb  Megademo Slideshow (Anders Carlsson (Goto80) <?>) : sidcheck initlong 0000
-9d0263d546504f0d567fe9d0617dc770  My Booty (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-4f44e14defeee5472abf09f2a9c7a2b5  Oso (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-0ad4cdfa3944509ea33287edfef697cf  Ponky (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-9f1ff6898bc9be6fbd9bee663147fc1a  Rent-A-Cop Reloaded (title) (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-80fe5105606ad80d4044052073388968  Skybox (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-2383ab23f4fb1717766c16ab88cce32c  Slabbarp (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-39833957a7051b311eb960a932ffa98c  Svenska Narkotika #1 (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-280746bd6c5240fbab34754b3bcc09cf  Svenska Narkotika #3 (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-344399f4534b77517a8eb4d31e803237  Svenska Narkotika #5 (Anders Carlsson (Goto80)) : sidcheck initlong 0000
-b78d0e2a4cac530356202cd04a9d886e  Totemtot4 (Anders Carlsson (Goto80)) : sidcheck initlong 0000
+9768f11da798ef2c48345f1d29cafeff  20 Years Is Nothing (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+90ee76a4f7180bebf724f5e24c60403a  Acidburger (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+9f6a74b0009233f3b3f8408a5b4653fd  Antispeed (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+59f1bb91e85522c9750a2bda837925e1  Birds on Fire (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+710ee5b23fc14201cb6e306a0eed7136  Birds on Fire (note) (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+07a51823d9badd2003d868e2de78cb3b  Bow Down (tune 3) (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+620ecb3929225e88306a5fc4ef336201  Dansa in (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+342b9456ac37d6c0979998bc08dc73c8  Evil Wizard 2 (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+4421e2b2f5fd43adca889cc9f0885dbc  The Great Ballad of the Storm... (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+5c1289554f3671ace300ae55d4eeb6fa  In Memory of (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+ec7a79cc7e81b0eeb5e459ef33ed4c0b  In the Name of the Sword (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+8baef092d59c0844ed1b407f12d60524  Megademo 7 (tune 1) (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+d5a2a7301e0a9037ad23487bc5b787fb  Megademo Slideshow (Anders Carlsson (Goto80) <?>) : sidcheck initlong 0000 [v2]
+9d0263d546504f0d567fe9d0617dc770  My Booty (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+4f44e14defeee5472abf09f2a9c7a2b5  Oso (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+0ad4cdfa3944509ea33287edfef697cf  Ponky (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+9f1ff6898bc9be6fbd9bee663147fc1a  Rent-A-Cop Reloaded (title) (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+80fe5105606ad80d4044052073388968  Skybox (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+2383ab23f4fb1717766c16ab88cce32c  Slabbarp (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+39833957a7051b311eb960a932ffa98c  Svenska Narkotika #1 (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+280746bd6c5240fbab34754b3bcc09cf  Svenska Narkotika #3 (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+344399f4534b77517a8eb4d31e803237  Svenska Narkotika #5 (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
+b78d0e2a4cac530356202cd04a9d886e  Totemtot4 (Anders Carlsson (Goto80)) : sidcheck initlong 0000 [v2]
 efdfc6556d0a5b7e67f1ad14a861f567  Contempu Berry (Jethro Atherall (gotoandplay)) : sidcheck client CFD3
 849aebf8dddbd8eba000a8922c18969a  Deliverance (Matt Gray) : sidcheck client exec AF00
 629d625953bc8688e87bb32f49833326  Dominator (Matt Gray) : sidcheck client exec C000
@@ -201,16 +203,16 @@ d83c031fc118bc5bd458b6778522ca6e  Pot Fun (Péter Varga (Griff)) : sidcheck clie
 5594375708faa0b298a6eff437213da1  Tie-break (Stefan Hartwig) : sidcheck client AF00
 e047b3d55b9599bf4fca1ee0493dc1ad  Super Pipeline II (Paul Hodgson) : sidcheck client C07F
 c64cbbe19bda4c1994c1abf05cc6d078  Hollywood Poker Pro (Chris Hülsbeck) : sidcheck client exec AF00
-cc1ba94ecf9e0ee46cf64658d215d5e7  Sound Expander Intro (Jonas Hultén (Hypnosis)) : sidcheck initlong 0000
+cc1ba94ecf9e0ee46cf64658d215d5e7  Sound Expander Intro (Jonas Hultén (Hypnosis)) : sidcheck initlong 0000 [v2]
 b89065f25921f95e687c7cbaf40473b2  King (Gerard Hultink) : sidcheck client exec C000
 960785e4e0971dd71191f2b628390bba  Descent of the Ship (IceWolf) : sidcheck client CFD3
-460272ca2fe95b01b06b3b2d3ce5d87e  Crash & Burn (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-cdda20b20bbd374d26b6b0718718a27c  Crosseyed (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-77bc81a846892acdb04c26f669cffa55  Klotokok (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-931bded0e980668adf5302753298eb54  Slackjaw (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-0b3d16ceb200365db21f2f4b43687e34  Tetrapapak (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-bbc74a60a8cd59e87c4d7a8958c26a12  Vacuole (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
-f20e3d3e98db4fb282d9073e026e5aa8  Vector Jelly (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000
+460272ca2fe95b01b06b3b2d3ce5d87e  Crash & Burn (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+cdda20b20bbd374d26b6b0718718a27c  Crosseyed (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+77bc81a846892acdb04c26f669cffa55  Klotokok (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+931bded0e980668adf5302753298eb54  Slackjaw (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+0b3d16ceb200365db21f2f4b43687e34  Tetrapapak (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+bbc74a60a8cd59e87c4d7a8958c26a12  Vacuole (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
+f20e3d3e98db4fb282d9073e026e5aa8  Vector Jelly (Ilija Melentijevic (iLKke)) : sidcheck initlong 0000 [v2]
 c8cd083dc6a61b453dd314515bbb4a87  The Fields (jowlsucks) : sidcheck client CFD3
 b3beb636a7d5344b6d888b3239e61ab1  Martin Short (that's enough) (jowlsucks) : sidcheck client CFD3
 b28633ee7f92e2987424711f9eb75dca  Game-Time (loader) (John Keding (Lazer)) : sidcheck client exec BA00
@@ -234,7 +236,7 @@ c4c6b37aea8f7a0df376d2ee77cc00ce  Helpop (mega9man) : sidcheck client CFD3
 db2cd53accf23e5544a85a1f86de12d3  Hillsfar (Paul Mudra) : sidcheck client C000
 4d5c8c8adfec2e30db8ac6f7db60b519  Mechanicus (Markus Müller (Sidbusters)) : sidcheck client B900
 dd6daaa807e6c034d06356bdfdff5bc0  Prob2 (Wolfgang Reszel (Nebula)) : sidcheck brk 0000
-2c83e3a463ae05562caf7430aa317d6c  Anticitizen 64 (Péter Nagy-Miklós (NecroPolo)) : sidcheck initlong 0000
+2c83e3a463ae05562caf7430aa317d6c  Anticitizen 64 (Péter Nagy-Miklós (NecroPolo)) : sidcheck initlong 0000 [v2]
 a495789a2438e6844ac680d96e685d42  Building Blocks (Kiko Kotlinski (Nitro Pulse)) : sidcheck client CFD3
 8fd58a24d4c35127c39ff9a10c7ed032  Tension Remix (Kiko Kotlinski (Nitro Pulse)) : sidcheck client CFD3
 cb1bc49677129a0ffd613085ee37b034  Ivan 'Ironman' S. Super Off Road (Jason Page) : sidcheck client B168
@@ -256,9 +258,9 @@ fd87e1a6bc51995f846c1434707ab4d8  74 (Justin Wamback (Sinc-X)) : sidcheck client
 3c9b342d9848e7385a9e3cba8b35551e  Demo Tune (Gilles Soulet) : sidcheck client C7E3
 2d617289cca1b27601cfbcf6ab950dce  Sapiens (Gilles Soulet) : sidcheck client C000
 2db6d5d9cc4303a1ca30c6f150b02013  Cybex (Rudolf Stember) : sidcheck client AF00
-16a9224f6478f3e503851358449987c1  Bendingbars (Frank Fenske (Street Tuff)) : sidcheck initlong 0000
-dafebaec1b295fcaf0d953bf213415c8  Sommarfunk (Susanne) : sidcheck initlong 0000
-e3c4c2ff2e220088761829c2050ce2cc  Teckomatorp (Susanne) : sidcheck initlong 0000
+16a9224f6478f3e503851358449987c1  Bendingbars (Frank Fenske (Street Tuff)) : sidcheck initlong 0000 [v2]
+dafebaec1b295fcaf0d953bf213415c8  Sommarfunk (Susanne) : sidcheck initlong 0000 [v2]
+e3c4c2ff2e220088761829c2050ce2cc  Teckomatorp (Susanne) : sidcheck initlong 0000 [v2]
 828f0a6639fab78a1afb43cf200bf643  Jump (Roger Svensson) : sidcheck playlong 0000
 95d59703bea9f4ce9c575bdcb204c1b3  Blues Brothers (Paul Tankard) : sidcheck client exec BB00
 a4bd4fcb7307b0580e7ccd19e6c6f5a8  Dalek Attack (Paul Tankard) : sidcheck client exec B700
@@ -273,14 +275,14 @@ e5c107a58d712d227afe244bcab18e50  Threatening Desert Wonders (Tex) : sidcheck cl
 417b4001fba5f399f99ae0f33ef0bf40  As Far as the Eye Can See (Rafal Kazimierski (Asterion)) : sidcheck client CFFF
 0ad0e01ed4258bc69aba6a3e3742f3c8  Fields of Hades (Ringo Reuter (Tragic Error)) : sidcheck client exec B300
 7d9911b7e93da7af3dcf80346295ec20  Intensity (Steve Turner) : sidcheck client B870
-fb91faad375489a5e5cffe85302c1240  Broken Tractorbeam (László Vincze (Vincenzo)) : sidcheck initlong 0000
+fb91faad375489a5e5cffe85302c1240  Broken Tractorbeam (László Vincze (Vincenzo)) : sidcheck initlong 0000 [v2]
 4002d3f602579193804463a51570013c  Aggressor Theme (Martin Walker) : sidcheck client C535
 9dc9613b267e660291ad553c2a93ba00  Rodland (Martin Walker) : sidcheck client exec AF00
 3e514a1777cb05f4e4f9d2f53867f8a3  Secret Project (Martin Walker) : sidcheck client C535
 969f78bfb6f570d0cdeac3f8ce61b2ed  Realm of Impossibility (Dave Warhol) : sidcheck client B212
 aeba4455f362124bbaf3b8af00e4c68e  Synetic (Jon Wells) : sidcheck client exec C000
 3a896a5261273bfaae931f5cf8fe31e5  Kwik Snax (Robert Westgate) : sidcheck client B200
-cab7d51c600010888955709a7bb6a754  Terminator Theme (Wilfried Elmenreich (Wil)) : sidcheck initlong 0000
+cab7d51c600010888955709a7bb6a754  Terminator Theme (Wilfried Elmenreich (Wil)) : sidcheck initlong 0000 [v2]
 8bae7ecef3b1ab53d90c71dd9a14663b  Sound Sample III (Michael Winterberg) : sidcheck client exec C000
 cb0a9b62856e6ae73c0e26f65b134b2f  Sound Sample IV (Michael Winterberg) : sidcheck client exec C000
 836892cb5912d1c0c0b3ae91a5fe55b7  Sound Sample VI (Michael Winterberg) : sidcheck client exec C000

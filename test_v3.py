@@ -19,6 +19,7 @@
     python3 test_v3.py --root ../hvsc/C64Music [--ids 13636,6301] [--jobs 15]
 """
 import argparse
+import re
 import socket
 import sqlite3
 import subprocess
@@ -124,6 +125,36 @@ def main():
         " WHERE scan_version=? AND histart=? AND calls=?", args[:3])}
     print("analyse v%d, %d morceaux servis en v2" % (jb.scan_version, len(rows)))
 
+    # 0. protection des clients v1 (D9, §6.2), réintégration known_bad_v2, cohérence de HISTART (§8)
+    con = sqlite3.connect(a.db)
+    v1_exclus = [r[0] for r in con.execute(
+        "SELECT t.id FROM tunes t JOIN scan s ON s.tune_id = t.id AND s.song = t.start_song AND s.scan_version = ?"
+        " AND s.histart = ? AND s.calls = ? WHERE t.compatible = 1 AND s.v1_risque > 0 ORDER BY t.id", args[:3])]
+    if check(jb.v1_where != "", "colonne v1_risque absente : analyse antérieure à la version 2"):
+        check(all(jb.get(i) is None for i in v1_exclus), "GET v1 sert un morceau v1_risque")
+        n_v1 = con.execute("SELECT COUNT(*) FROM tunes WHERE compatible = 1").fetchone()[0]
+        n_serv = jb.con.execute("SELECT COUNT(*) FROM tunes WHERE compatible = 1" + jb.v1_where, jb.v1_args).fetchone()[0]
+        check(n_serv == n_v1 - len(v1_exclus), "tirage v1 : %d servis pour %d - %d" % (n_serv, n_v1, len(v1_exclus)))
+        ex = set(v1_exclus)
+        check(all(r is not None and r["id"] not in ex for r in (jb.pick(None, 0xAEFF) for _ in range(300))),
+              "RANDOM2 tire un morceau refusé aux clients v1")
+    kb2 = [r[0] for r in con.execute("SELECT id FROM tunes WHERE reject = 'known_bad_v2'")]
+    kb2_ok = [i for i in kb2 if jb.get3(i) is not None]
+    check(all(jb.get(i) is None for i in kb2), "known_bad_v2 servi à un client v1")
+    hs = {"server.py": server.SCAN_HISTART}
+    m = re.search(r'--histart", default="([0-9A-Fa-f]+)"', (HERE / "scan_db.py").read_text())
+    hs["scan_db.py"] = int(m.group(1), 16) if m else None
+    m = re.search(r"MAX_ADDR=\$\{MAX_ADDR:-0x([0-9A-Fa-f]+)\}", (HERE / "update_db.sh").read_text())
+    hs["update_db.sh"] = int(m.group(1), 16) + 1 if m else None
+    for mm in (HERE / "c64" / "src" / "memmap.asm", HERE.parent.parent / "SIDBox2_C64" / "src" / "memmap.asm"):
+        if mm.exists():
+            m = re.search(r"\.const HISTART = \$([0-9A-Fa-f]+)", mm.read_text())
+            hs[mm.name] = int(m.group(1), 16) if m else None
+            break
+    check(len(set(hs.values())) == 1, "HISTART incohérent : %s" % {k: v and "$%04X" % v for k, v in hs.items()})
+    print("0. v1 : %d morceaux refusés aux clients v1 (D9) ; known_bad_v2 : %d servis en v2 sur %d ; HISTART $%04X dans %s"
+          % (len(v1_exclus), len(kb2_ok), len(kb2), server.SCAN_HISTART, ", ".join(hs)))
+
     # 1. référence
     with tempfile.TemporaryDirectory() as ref:
         ref = Path(ref)
@@ -203,6 +234,10 @@ def main():
                 head = recv_line(s).split("|")
                 if check(head[0] == "OK" and len(head) == 13, "RANDOM2 : %s" % head[:3]):
                     recv_exact(s, int(head[2]))
+                for tid in v1_exclus[:3]:          # D9 : un morceau à risque pour les clients v1 leur est refusé
+                    s.sendall(b"GET %d\n" % tid)
+                    head = recv_line(s).split("|")
+                    check(head[0] == "ERR", "GET %d (v1_risque) : %s" % (tid, head[:3]))
                 s.sendall(b"STATS\n")
                 head = recv_line(s).split("|")
                 check(head[0] == "STATS" and len(head) == 3, "STATS : %s" % head)
