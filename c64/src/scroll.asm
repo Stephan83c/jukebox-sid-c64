@@ -1,14 +1,4 @@
-; SID Jukebox C64
-; Copyright (C) 2026 Stephan83c
-; SPDX-License-Identifier: GPL-3.0-or-later
-;
-; This program is free software: you can redistribute it and/or modify it under the
-; terms of the GNU General Public License as published by the Free Software Foundation,
-; either version 3 of the License, or (at your option) any later version. It is
-; distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
-; généré par make_scroll.py
-        .export scr_glyphs, scrtext
-        .rodata
+// généré par make_scroll.py
 scr_glyphs:
         .byte $18, $18, $3C, $3C, $66, $66, $7E, $7E
         .byte $66, $66, $66, $66, $66, $66, $00, $00
@@ -100,9 +90,19 @@ scr_glyphs:
         .byte $66, $66, $66, $66, $3C, $3C, $00, $00
         .byte $3C, $3C, $66, $66, $66, $66, $3E, $3E
         .byte $06, $06, $66, $66, $3C, $3C, $00, $00
+// Texte intégré du scroller (affiché seulement si le serveur n'en envoie pas) : écrit en clair, converti à l'assemblage en
+// indices de glyphes (même alphabet fixe de 45 lettres que make_scroll.py et que le client : 0 = espace, $FF = fin).
+        .const SCRTEXT = "          SID JUKEBOX 2.0  ***  EXACT SOUND  ***  NEW PLAYER  ***  PRESS SPACE FOR THE NEXT TUNE  ***          "
+        .function scr_index(c) {
+            .var order = "ABCDEFGHIJKLMNOPQRSTUVWXYZ*.,!?-/':0123456789"
+            .if (c == ' ') .return 0
+            .for (var k = 0; k < order.size(); k++) {
+                .if (order.charAt(k) == c) .return k + 1
+            }
+            .error "caractère hors de l'alphabet du scroller : " + c
+        }
 scrtext:
-        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $13, $09, $04, $00, $0A, $15
-        .byte $0B, $05, $02, $0F, $18, $00, $00, $1B, $1B, $1B, $00, $00, $10, $12, $05, $13
-        .byte $13, $00, $13, $10, $01, $03, $05, $00, $06, $0F, $12, $00, $14, $08, $05, $00
-        .byte $0E, $05, $18, $14, $00, $14, $15, $0E, $05, $00, $00, $1B, $1B, $1B, $00, $00
-        .byte $00, $00, $00, $00, $00, $00, $00, $00, $FF
+        .for (var i = 0; i < SCRTEXT.size(); i++) {
+            .byte scr_index(SCRTEXT.charAt(i))
+        }
+        .byte $FF

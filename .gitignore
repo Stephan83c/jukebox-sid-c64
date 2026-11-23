@@ -27,3 +27,4 @@ banned_ips.txt
 # sauvegardes de la base (update_db.sh, déploiements) : jamais dans le dépôt
 *.bak
 jukebox.db.*
+sidscan

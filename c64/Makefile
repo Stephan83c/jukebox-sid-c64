@@ -1,47 +1,38 @@
-# SID Jukebox C64
-# Copyright (C) 2026 Stephan83c
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software Foundation,
-# either version 3 of the License, or (at your option) any later version. It is
-# distributed WITHOUT ANY WARRANTY; see the LICENSE file for details.
-SERVEUR_IP ?= boombass.net
-SERVEUR_PORT ?= 6474
+# SID Jukebox, client C64 v2.0 : tout en assembleur Kick Assembler 5.25 (Java). Sources dans src/, outils PC dans tools/.
+#   make [SERVER=boombass.net] [PORT=6474]   client réseau (build/jukebox.prg)
+#   make deploy [ULTIMATE=192.168.1.27]      envoie et lance sur l'Ultimate (UCI au repos, aucun téléchargement en cours)
+#   make demo ; make vice                    démo sans réseau, un morceau intégré (tools/mktune.py ID d'abord) ; banc VICE
+#   make release TAG=vX.Y                    zip de la release (jukebox-sid.prg + README.txt) joint par gh
+KICKASS  ?= $(HOME)/KickAssembler/KickAss.jar
+SERVER   ?= boombass.net
+PORT     ?= 6474
+VERSION  ?= 2.0
 ULTIMATE ?= 192.168.1.27
-HISTART ?= 0xAF00
-VERSION ?= 1.9
-MAX_SECS ?= 1000
-VIS ?= 1
-# Oscar64 (https://github.com/drmortalwombat/oscar64) : chemin du compilateur, et de ses fichiers d'en-tête
-# (par défaut le dossier include voisin du dossier bin). cc65 fournit ca65/ld65 pour la partie assembleur.
-OSC ?= oscar64
-export OSC OSCINC VERSION SERVEUR_IP SERVEUR_PORT MAX_SECS VIS HISTART
+PRG      := build/jukebox.prg
+DEMO     := build/demo.prg
+KICK      = java -jar $(KICKASS)
 
-PRG := build/jukebox.prg
-SRC := client.c main.c uci.c uci.h console.c play.s logo.s scroll.s asm.cfg build.sh Makefile
-
-.PHONY: all deploy clean demo release
-.DEFAULT_GOAL := all
-
-# Version de démonstration : un morceau intégré, sans réseau (pour VICE) ; voir make_demo.py
-demo: $(SRC) demo.s demo.h demo.bin
-	./build.sh demo
-
+.PHONY: all demo clean deploy vice release FORCE
 all: $(PRG)
 
 build/options: FORCE
-	@mkdir -p build; echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS) $(VERSION)' | cmp -s - $@ || echo '$(SERVEUR_IP) $(SERVEUR_PORT) $(HISTART) $(MAX_SECS) $(VIS) $(VERSION)' > $@
-FORCE:
+	@mkdir -p build; echo '$(SERVER) $(PORT) $(VERSION)' | cmp -s - $@ || echo '$(SERVER) $(PORT) $(VERSION)' > $@
 
-$(PRG): build/options $(SRC)
-	./build.sh
+$(PRG): $(wildcard src/*.asm src/*.inc) Makefile build/options
+	@test -f $(KICKASS) || { echo "KickAss.jar introuvable : make KICKASS=/chemin/KickAss.jar"; exit 1; }
+	$(KICK) src/main.asm -odir $(CURDIR)/build -o $(CURDIR)/$(PRG) -symbolfile :SERVER=$(SERVER) :PORT=$(PORT) :VERSION=$(VERSION)
 
-# Aucun socket n'est ouvert pendant la lecture : on peut redéployer à tout moment.
+demo: $(DEMO)
+$(DEMO): $(wildcard src/*.asm) build/tune.inc Makefile
+	$(KICK) src/demo.asm -odir $(CURDIR)/build -o $(CURDIR)/$(DEMO) -symbolfile :VERSION=$(VERSION)
+
+# Règle UCI : ne pas redéployer pendant un téléchargement ni avec un socket ouvert.
 deploy: $(PRG)
 	curl -sS -X POST --data-binary @$(PRG) http://$(ULTIMATE)/v1/runners:run_prg
 
-# Usage : make release TAG=v1.3  (compile avec les réglages par défaut et joint le .prg à la release GitHub)
+vice: $(DEMO)
+	x64sc -autostart $(DEMO)
+
 REPO ?= Stephan83c/jukebox-sid-c64
 release: $(PRG)
 	@test -n "$(TAG)" || { echo "usage: make release TAG=vX.Y"; exit 1; }
@@ -51,4 +42,4 @@ release: $(PRG)
 	gh release upload $(TAG) build/jukebox-sid-$(TAG).zip --clobber -R $(REPO)
 
 clean:
-	rm -rf build *.o
+	rm -rf build

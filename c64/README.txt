@@ -1,5 +1,5 @@
 ==========================================================================
- SID JUKEBOX v1.9 for the C64 Ultimate / pour le C64 Ultimate
+ SID JUKEBOX v2.0 for the C64 Ultimate / pour le C64 Ultimate
  https://github.com/Stephan83c/jukebox-sid-c64
 ==========================================================================
  Each section: English first, then francais.
@@ -134,13 +134,19 @@ FR  Le texte du scroller ne vient PAS de ton C64 : il vient du serveur, et
 HOW IT WORKS / COMMENT CA MARCHE
 --------------------------------
 EN  - Server (server.py): a small text protocol over TCP. The C64 sends a
-      command such as "RANDOM2 AEFF [pattern]" and gets one header line
+      command such as "RANDOM3 AEFF [pattern]" and gets one header line
       (title, author, year, load/init/play addresses, scroller text) then
-      the raw tune code. Only tunes that fit in the C64's free memory are
-      offered.
+      the tune code and a small relay block. Only tunes that fit in the
+      C64's free memory and pass an emulation check are offered.
+    - Exact sound (new in v2.0): the server knows, from that emulation,
+      every place where the tune writes to the SID; these writes go
+      through tiny relays that also feed the VU meters, so the SID gets
+      exactly what the tune writes (v1.x read the SID registers once a
+      frame and could miss fast changes).
     - Client (this PRG): opens the TCP socket through the Ultimate's
       Command Interface. The tune is loaded at its own address in
-      $0800-$AEFF; the program lives in $AF00-$CFFF; the display uses
+      $0800-$AEFF; the program lives in $AF00-$CFFF (all in 6502
+      assembly since v2.0); the display uses
       $F400-$FFFF. A raster interrupt calls the tune's play routine every
       frame: the 6510 really plays the music.
     - PAL and NTSC: the tune is played at its own rate (50 or 60 Hz, sent by
@@ -154,13 +160,21 @@ EN  - Server (server.py): a small text protocol over TCP. The C64 sends a
     - Web page (web.py): a separate small web server; it only writes the
       scroller text file that server.py reads at every request.
 FR  - Serveur (server.py) : un petit protocole texte sur TCP. Le C64 envoie
-      une commande comme "RANDOM2 AEFF [motif]" et recoit une ligne
+      une commande comme "RANDOM3 AEFF [motif]" et recoit une ligne
       d'en-tete (titre, auteur, annee, adresses load/init/play, texte du
-      scroller) puis le code brut du morceau. Seuls les morceaux qui
-      tiennent dans la memoire libre du C64 sont proposes.
+      scroller) puis le code du morceau et un petit bloc de relais. Seuls
+      les morceaux qui tiennent dans la memoire libre du C64 et passent un
+      controle par emulation sont proposes.
+    - Son exact (nouveau en v2.0) : grace a cette emulation, le serveur
+      connait chaque endroit ou le morceau ecrit dans le SID ; ces
+      ecritures passent par de petits relais qui alimentent aussi les
+      vu-metres, donc le SID recoit exactement ce qu'ecrit le morceau (la
+      v1.x relisait les registres une fois par image et pouvait rater des
+      changements rapides).
     - Client (ce PRG) : ouvre la connexion TCP via la Command Interface de
       l'Ultimate. Le morceau est charge a sa propre adresse dans
-      $0800-$AEFF ; le programme vit en $AF00-$CFFF ; l'affichage utilise
+      $0800-$AEFF ; le programme vit en $AF00-$CFFF (tout en assembleur
+      6502 depuis la v2.0) ; l'affichage utilise
       $F400-$FFFF. Une interruption raster appelle la routine de lecture
       du morceau a chaque image : c'est bien le 6510 qui joue.
     - PAL et NTSC : le morceau est joue a sa propre cadence (50 ou 60 Hz,
@@ -182,15 +196,21 @@ EN  - Network error: check step 1 (Command Interface Enabled) and step 2.
     - NEVER reset or re-run a program on the Ultimate while the C64 is
       downloading a tune: the command interface can stay blocked until you
       cut the power. Wait until a tune is playing.
-    - Some tunes may fail or sound odd: not every SID tune is playable by
-      this player. Press SPACE for another one.
+    - "SERVER WITHOUT V2.0, RETRYING...": the server still runs an older
+      version; the C64 retries by itself.
+    - "TUNE n STUCK, SKIPPED": a tune did not give control back; it is
+      dropped and the next one is drawn (please report its number).
+    - Some tunes may still sound odd. Press SPACE for another one.
 FR  - Erreur reseau : verifie l'etape 1 (Command Interface activee) et 2.
     - Ne JAMAIS reinitialiser ni relancer un programme sur l'Ultimate
       pendant que le C64 telecharge un morceau : la Command Interface peut
       rester bloquee jusqu'a une coupure de courant. Attends qu'un morceau
       joue.
-    - Quelques morceaux peuvent echouer ou sonner bizarrement : tous les
-      morceaux SID ne sont pas jouables par ce lecteur. ESPACE pour un
+    - "SERVER WITHOUT V2.0, RETRYING..." : le serveur a encore une
+      ancienne version ; le C64 reessaie tout seul.
+    - "TUNE n STUCK, SKIPPED" : un morceau n'a pas rendu la main ; il est
+      abandonne et le suivant est tire (signale-nous son numero).
+    - Quelques morceaux peuvent encore sonner bizarrement. ESPACE pour un
       autre.
 
 COPYRIGHT / DROIT D'AUTEUR
