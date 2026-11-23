@@ -52,6 +52,26 @@ réseau par l'UCI de l'Ultimate). Contrainte retenue : pas de synchronisation, u
    secours ramené de 423 à 72 colonnes, texte du serveur converti sur place dans le tampon d'en-tête.
    Marge restante : 7 octets.
 
+## v2.0 : son exact, client tout en assembleur (2026-11-23)
+
+Après la v1.9, deux constats : 77 % des morceaux écrivent deux valeurs dans un même registre de contrôle au cours d'une image,
+que la capture de la v1.x (E/S en RAM, recopie une fois par image) ne pouvait pas rendre ; et plusieurs plantages (retour à
+`READY.`, gel à `CONNECTING...`) venaient de morceaux qui touchent à `$01`, aux pages 2-3 ou aux vecteurs. Décision de
+l'utilisateur : « faire une spec solide et tout refaire » (`SPEC-v2.md`), avec les mêmes fonctions qu'en v1.9 et un son exact.
+
+- **Analyse par émulation** (`sidscan.c`, `scan_db.py`) : chaque morceau joué 10 000 appels dans les conditions du client ;
+  44 371 acceptés sur 44 678, et pour 97,7 % toutes les écritures SID sont remplaçables.
+- **Relais** : le serveur remplace chaque instruction qui écrit dans le SID par un `JSR` vers un petit relais qui écrit au vrai
+  SID et garde une copie pour les vu-mètres (`RANDOM3`/`GET3`). `test_v3.py` vérifie toute la base contre `sidscan`.
+- **Client réécrit en Kick Assembler** (projet SIDBox2, versé dans `c64/`) : contrat d'état autour du morceau (page zéro, pages
+  2-3, `$01`, CIA restaurés), délais sur chaque attente réseau, garde-fou NMI pour un morceau qui ne rend pas la main.
+- **Tests sur le C64U** : 13 pannes du serveur à chaque étape réseau (`c64/tools/panne.py`), endurance 100 morceaux,
+  NTSC (hauteur 0,999-1,004). City of Love et Horror City, écartés en v1.9, jouent en v2.0.
+- **Protection des clients v1.9** (le client v1.9 n'est pas modifié) : le serveur ne leur envoie plus 683 morceaux qui font
+  planter leur lecteur ; 80 morceaux écartés à la main reviennent pour les clients v2.0 (repère `[v2]` de `bad_tunes.txt`).
+- `HISTART` reste à `$AF00` : passer à `$C000` (client sous le KERNAL) aurait apporté 770 morceaux de plus pour une refonte.
+- Détail des étapes et des mesures : `docs/v2.0/`.
+
 ## v1.9 : hauteur juste en PAL/NTSC, norme affichée (2026-11-22)
 
 - **Hauteur** (suite de la demande Reddit du 2026-11-20 : « le SID sait s'il est PAL, ajuste en conséquence »). L'horloge du SID suit la

@@ -50,6 +50,10 @@ ask() { [ "$YES" = 1 ] && return 0; read -r -p "$1 [o/N] " r; [[ $r =~ ^[oOyY] ]
 NEW="$DB.new"
 echo "== Réindexation de $HVSC (--max-addr $MAX_ADDR)"
 python3 "$HERE/indexer.py" "$HVSC" -o "$NEW" --max-addr "$MAX_ADDR"
+# v2.0 : analyse par émulation (table scan) ; sans elle, les clients v2.0 ne sont pas servis
+echo "== Analyse sidscan (clients v2.0, quelques minutes)"
+[ "$HERE/sidscan" -nt "$HERE/sidscan.c" ] || cc -O2 -o "$HERE/sidscan" "$HERE/sidscan.c"
+python3 "$HERE/scan_db.py" --db "$NEW" --root "$HVSC" --histart "$(printf '%X' $((MAX_ADDR + 1)))"
 N_NEW=$(count "$NEW")
 N_OLD=0; [ -f "$DB" ] && N_OLD=$(count "$DB")
 echo "== Morceaux jouables : $N_NEW (avant : $N_OLD)"

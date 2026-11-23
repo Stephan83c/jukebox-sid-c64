@@ -31,6 +31,7 @@ de l'archive : l'indexeur s'en sert pour les durées.
 ```sh
 cp jukebox.db jukebox.db.bak                      # filet de sécurité
 python3 indexer.py /chemin/vers/C64Music -o jukebox.db --max-addr 0xAEFF
+cc -O2 -o sidscan sidscan.c && python3 scan_db.py --root /chemin/vers/C64Music   # analyse v2.0 (faite par update_db.sh)
 ```
 
 `--max-addr` doit rester égal à `HISTART - 1` (`c64/Makefile`) et à `MEM_HAUT` (`c64/main.c`) : au-dessus,

@@ -15,6 +15,7 @@ dans l'émulateur installé sur la machine (x64sc doit exister), par son moniteu
 import re
 import socket
 import subprocess
+from pathlib import Path
 import time
 
 PORT = 6510
@@ -53,7 +54,7 @@ try:
             data += rows[a]
     assert len(data) == 1024, len(data)
     assert data[8:16] == bytes([0x18, 0x3C, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00]), "pas la lettre A ?"
-    open("chargen_set1.bin", "wb").write(data)
+    open(Path(__file__).resolve().parents[1] / "chargen_set1.bin", "wb").write(data)     # c64/chargen_set1.bin
     print("chargen_set1.bin écrit (1024 octets)")
 finally:
     vice.terminate()
