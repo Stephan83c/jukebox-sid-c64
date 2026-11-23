@@ -3,7 +3,7 @@
 # Repère « [v2] » en fin de ligne : écarté pour les clients v1 seulement (raison known_bad_v2) ; servi aux clients v2.0
 # (RANDOM3/GET3) si l'analyse sidscan l'accepte. Les 77 « initlong » viennent du lecteur v1 (E/S en RAM pendant init).
 1942310b7068f060d9e21a97cc1a53bb  Riparian (Goto80) : init attend $D012 alors que les E/S sont en RAM, le C64 se fige à 00:00 [v2]
-fb2459ae5349f285c3c97e3526e36e6a  City of Love (Extended Edition) (Flotsam) : fige le vrai C64U à 00:00, joue bien dans VICE, cause inconnue (2026-11-21)
+fb2459ae5349f285c3c97e3526e36e6a  City of Love (Extended Edition) (Flotsam) : fige le vrai C64U à 00:00, joue bien dans VICE, cause inconnue (2026-11-21) ; joue sur le C64U en v2.0 (2026-11-23) [v2]
 
 # Écartés par sidcheck (émulation du lecteur, 2026-11-22) : client = écrit dans le client ($AF00-$CFFF), exec = y exécute du code,
 # zpsave = écrit en $D200-$D2FF, vect = écrit en $FFFA-$FFFF, initlong/playlong = init ou play sans fin (E/S en RAM), jam/brk = blocage.
@@ -292,4 +292,4 @@ b3a91768316448a419da20a8d8ad6ff0  Dim4 (Stephen L. Judd (Wyndex)) : sidcheck cli
 6c73dc3400ec47ce4989cbe9a7e74510  Gallery #1 (Giulio Zicchi (Zed)) : sidcheck vect FFFF
 17f57a51e5c7af944871c2ae081c92d7  Bergentrückung (Zlew) : sidcheck client CFD3
 96bc6894d8cf1fb38be22f810f39d49e  I Wish There Was a Girl in... (Zlew) : sidcheck client CFD3
-4cef3c2caff2153e97badcef8e395944  Horror City (<?>) : aucun son sur le vrai C64U (signalé par l'utilisateur, 2026-11-22)
+4cef3c2caff2153e97badcef8e395944  Horror City (<?>) : aucun son sur le vrai C64U (signalé par l'utilisateur, 2026-11-22) ; joue sur le C64U en v2.0 (2026-11-23) [v2]
