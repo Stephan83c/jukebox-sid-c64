@@ -215,6 +215,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 a.dl{display:inline-block;margin:8px 0 4px;background:var(--yl);color:#000;padding:9px 16px;text-decoration:none;font-weight:700;
 text-transform:uppercase;letter-spacing:.06em}
 a.dl:hover,a.dl:focus{background:var(--lb)}
+.about img{display:block;max-width:100%;height:auto;margin:10px 0;border:2px solid #1d1d55;image-rendering:pixelated}
 .lang{text-align:right;font-size:.85rem;margin:-12px 0 8px}.lang a{color:var(--lb);text-decoration:none;padding:0 2px}
 .lang a.on{color:var(--yl);text-decoration:underline}
 @media (max-width:520px){body{font-size:14px;padding:6px}main{padding:18px 12px;border-width:6px}
@@ -287,6 +288,12 @@ un scroller. <b>Le texte de ce scroller, c'est celui que tu changes sur cette pa
 <li><code>S</code> recherche par artiste ou titre : les morceaux suivants sont tirés au hasard parmi ceux qui correspondent (RETURN valide, RUN/STOP annule, RETURN seul efface la recherche)</li>
 <li><code>L</code> boucle on/off : rejoue le même morceau à la fin (la touche s'allume en vert) &nbsp; <code>V</code> vu-mètres on/off (vert aussi) &nbsp; <code>Q</code> retour au BASIC</li>
 </ul>
+<h2>LA VERSION HORS LIGNE</h2>
+<p><b>My SID Jukebox</b> joue au hasard <b>tes propres SID</b>, trouvés sur la carte SD, les clés USB ou un NAS relié
+à l'Ultimate. Pas de serveur ni d'Internet : tout se passe sur le C64.</p>
+<img src="https://raw.githubusercontent.com/Stephan83c/my-sid-jukebox-c64/main/docs/screenshot.png" alt="Écran de My SID Jukebox pendant la lecture d'un morceau" width="768" height="544" loading="lazy">
+<a class="dl" href="https://github.com/Stephan83c/my-sid-jukebox-c64/releases/latest" target="_blank" rel="noopener noreferrer">Télécharger My SID Jukebox</a>
+<p>Code source et mode d'emploi (en anglais) sur <a href="https://github.com/Stephan83c/my-sid-jukebox-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
 <p>Le code source (serveur Python et client C) est sur
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
 Les morceaux viennent de la <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
@@ -316,6 +323,12 @@ and a scroller. <b>The scroller text is the one you change on this page.</b></p>
 <li><code>S</code> search by artist or title: the next tunes are picked at random among the matches (RETURN confirms, RUN/STOP cancels, empty RETURN clears the search)</li>
 <li><code>L</code> loop on/off: replays the same tune when it ends (the key turns green) &nbsp; <code>V</code> level meters on/off (green too) &nbsp; <code>Q</code> back to BASIC</li>
 </ul>
+<h2>OFFLINE VERSION</h2>
+<p><b>My SID Jukebox</b> plays <b>your own SIDs</b> at random, found on the SD card, USB sticks or a NAS linked to the
+Ultimate. No server, no Internet: everything runs on the C64.</p>
+<img src="https://raw.githubusercontent.com/Stephan83c/my-sid-jukebox-c64/main/docs/screenshot.png" alt="My SID Jukebox screen while playing a tune" width="768" height="544" loading="lazy">
+<a class="dl" href="https://github.com/Stephan83c/my-sid-jukebox-c64/releases/latest" target="_blank" rel="noopener noreferrer">Download My SID Jukebox</a>
+<p>Source code and instructions on <a href="https://github.com/Stephan83c/my-sid-jukebox-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
 <p>The source code (Python server and C client) is on
 <a href="https://github.com/Stephan83c/jukebox-sid-c64" target="_blank" rel="noopener noreferrer">GitHub</a>.
 The tunes come from the <a href="https://hvsc.c64.org/" target="_blank" rel="noopener noreferrer">High Voltage SID
@@ -470,7 +483,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Content-Security-Policy",
-                         "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'")
+                         "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; "
+                         "img-src https://raw.githubusercontent.com")
         self.end_headers()
         self.wfile.write(body)
 
